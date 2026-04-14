@@ -1,0 +1,28 @@
+name: "My R Code Gallery"
+output_dir: "public"
+
+navbar:
+  title: "My R Code"
+  left:
+    - text: "Home"
+      href: index.html
+    - text: "基础图"
+      href: 01基础图.html
+    - text: "热图"
+      href: 02热图.html
+    - text: "组学分析"
+      href: 03组学分析.html
+    - text: "网络图"
+      href: 04网络图.html
+    - text: "环形图"
+      href: 05环形图.html
+
+output: html_document
+
+include:
+  - "**/*.Rmd"
+  - "**/*.csv"
+  - "**/*.png"
+  - "**/*.jpg"
+  - "**/*.jpeg"
+  - "**/*.pdf"
