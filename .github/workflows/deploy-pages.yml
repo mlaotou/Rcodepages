@@ -22,6 +22,7 @@ jobs:
 
       - name: Generate index
         run: |
+          pip install beautifulsoup4
           python .github/scripts/generate_searchable_index.py
           python .github/scripts/generate_file_list.py
 
