@@ -13,7 +13,7 @@ output:
 ---
 # <span style="display: none;">设置代码块全局选项</span>{.unnumbered}
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(
+ knitr::opts_chunk$set(
 	echo = TRUE,
 	fig.align = "center",
 	fig.height = 8,
@@ -21,35 +21,13 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE,
 	tidy = TRUE
-)
-library(rstudioapi)
-setwd(dirname(getActiveDocumentContext()$path))
-getwd()
-```
-
-# 加载包
-```{r libraries}
-
-```
-
-
-
-
-```{r}
-
-```
-
-# Session info {.unnumbered}
-```{r session-info}
-sessioninfo::session_info()
+ )
 ```
 
 
 ```{r}
 # 使用gemini 2.5 pro生成代码，首先上传图片，让其识别图片主要信息，再给出提示1：1复现该图
-rm(list=ls())  # 清除环境变量  
 # 设置工作路径
-library(rstudioapi);setwd(dirname(getActiveDocumentContext()$'path'));getwd()
 # 加载包
 library(ggplot2)
 library(dplyr)
@@ -172,15 +150,11 @@ print(final_plot)
 # png("分组配对连线.png",width = 10,height = 10,unit = "in",res = 600,family = "serif")
 # dev.off()
 
-```
-
-# Save plot
-ggsave("分组配对连线.png", width = 10, height = 8, dpi = 300)
-
+# Save as PNG
+ggsave("分组配对连线.png", width = 8, height = 6, dpi = 300)
 ```
 
 # Session info
 ```{r session-info}
 sessioninfo::session_info()
 ```
-

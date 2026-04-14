@@ -13,7 +13,7 @@ output:
 ---
 # <span style="display: none;">设置代码块全局选项</span>{.unnumbered}
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(
+ knitr::opts_chunk$set(
 	echo = TRUE,
 	fig.align = "center",
 	fig.height = 8,
@@ -21,15 +21,10 @@ knitr::opts_chunk$set(
 	message = FALSE,
 	warning = FALSE,
 	tidy = TRUE
-)
-```
-
-```{r}
-
+ )
 ```
 
 # Session info {.unnumbered}
 ```{r session-info}
 sessioninfo::session_info()
 ```
-
