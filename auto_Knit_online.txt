@@ -1,2 +1,2 @@
 时间序列图
-棒棒糖图
+棒棒糖图# Trigger re-render
