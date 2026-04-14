@@ -35,35 +35,55 @@ jobs:
       - name: Render Rmd files
         id: render
         run: |
+          echo "=== Step 1: Read auto_Knit_online.txt ==="
+          cat auto_Knit_online.txt
+
           TO_KNIT=$(cat auto_Knit_online.txt)
-          echo "Processing: $TO_KNIT"
+          echo ""
+          echo "=== Step 2: Folders to process ==="
+          echo "$TO_KNIT"
+
+          echo ""
+          echo "=== Step 3: List all directories ==="
+          ls -la
 
           RENDERED=0
           FAILED=0
 
           for pattern in $TO_KNIT; do
-            echo "=== $pattern ==="
+            echo ""
+            echo "=== Processing: $pattern ==="
 
-            # Find Rmd files in matching folders
-            for rmd in */"$pattern"/*.Rmd; do
-              [ -f "$rmd" ] || continue
+            # Check if folder exists
+            if [ ! -d "$pattern" ]; then
+              echo "Folder NOT found: $pattern"
+              continue
+            fi
 
-              folder=$(dirname "$rmd")
+            # Find Rmd files in this folder
+            for rmd in "$pattern"/*.Rmd; do
+              if [ ! -f "$rmd" ]; then
+                echo "No Rmd files in: $pattern"
+                continue
+              fi
+
               echo "Rendering: $rmd"
-
-              # Render to HTML
               html="${rmd%.Rmd}.html"
-              if Rscript -e "rmarkdown::render('$rmd', output_file='$html')"; then
-                echo "OK: $rmd -> $html"
+
+              if Rscript -e "rmarkdown::render('$rmd', output_file='$html')" 2>&1; then
+                echo "SUCCESS: $rmd -> $html"
                 RENDERED=$((RENDERED + 1))
               else
-                echo "FAIL: $rmd"
+                echo "FAILED: $rmd"
                 FAILED=$((FAILED + 1))
               fi
             done
           done
 
-          echo "Rendered: $RENDERED, Failed: $FAILED"
+          echo ""
+          echo "=== Summary ==="
+          echo "Rendered: $RENDERED"
+          echo "Failed: $FAILED"
           echo "rendered=$RENDERED" >> $GITHUB_OUTPUT
           echo "failed=$FAILED" >> $GITHUB_OUTPUT
 
@@ -76,10 +96,11 @@ jobs:
           if ! git diff --staged --quiet; then
             git commit -m "Auto-render Rmd files"
             git push origin main || git push origin main --force
+          else
+            echo "No files to commit"
           fi
 
-      - name: Report
+      - name: Report status
         if: always()
         run: |
-          echo "Rendered: ${{ steps.render.outputs.rendered }}"
-          echo "Failed: ${{ steps.render.outputs.failed }}"
+          echo "Done! Rendered: ${{ steps.render.outputs.rendered }}, Failed: ${{ steps.render.outputs.failed }}"
