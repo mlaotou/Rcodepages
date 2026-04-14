@@ -17,130 +17,69 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          lfs: false
 
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git-lfs libmagick++-dev libgeos-dev libgfortran5 liblapack-dev libblas-dev \
-            libpng-dev libjpeg-dev librsvg2-dev libcairo2-dev libnode-dev libproj-dev \
-            libxml2-dev libcurl4-openssl-dev libssl-dev libhdf5-dev libv8-dev \
-            libfontconfig1-dev libharfbuzz-dev libfribidi-dev libgdal-dev gfortran \
-            libfreetype6-dev libtiff5-dev libudunits2-dev
-          git lfs install
+          sudo apt-get install -y libmagick++-dev libpng-dev libjpeg-dev libfontconfig1-dev
 
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
-        with:
-          r-version: 'latest'
-
-      - name: Set up Java for rJava
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '11'
-
-      - name: Configure R for Java
-        run: sudo R CMD javareconf
 
       - name: Set up Pandoc
         uses: r-lib/actions/setup-pandoc@v2
-        with:
-          pandoc-version: '3.8.2'
 
       - name: Install R packages
-        run: |
-          Rscript -e 'install.packages(c("rmarkdown", "remotes", "sessioninfo"), repos="https://cloud.r-project.org")'
-          Rscript -e 'installed <- installed.packages()[,1]; writeLines(installed, "installed_packages.txt")'
+        run: Rscript -e 'install.packages(c("rmarkdown", "sessioninfo"), repos="https://cloud.r-project.org")'
 
-      - name: Show auto_Knit_online.txt content
-        run: |
-          echo "=== Files to knit ==="
-          cat auto_Knit_online.txt
-          echo "=================="
-
-      - name: Find and render matching Rmd files
+      - name: Render Rmd files
         id: render
         run: |
           TO_KNIT=$(cat auto_Knit_online.txt)
-          echo "to_knit: $TO_KNIT"
-          echo "to_knit=$TO_KNIT" >> $GITHUB_OUTPUT
+          echo "Processing: $TO_KNIT"
 
-          echo "=== Finding Rmd files ==="
-          find . -name "*.Rmd" -type f
-
-          RENDERED_COUNT=0
-          FAILED_COUNT=0
+          RENDERED=0
+          FAILED=0
 
           for pattern in $TO_KNIT; do
-            echo ""
-            echo "========== Processing: $pattern =========="
+            echo "=== $pattern ==="
 
-            # Find Rmd files matching the pattern
-            while IFS= read -r rmd_file; do
-              rmd_dir=$(dirname "$rmd_file")
-              folder_name="${rmd_dir#.}"
+            # Find Rmd files in matching folders
+            for rmd in */"$pattern"/*.Rmd; do
+              [ -f "$rmd" ] || continue
 
-              # Check if folder contains the pattern
-              if [[ ! "$folder_name" == *"$pattern"* ]]; then
-                echo "Skip: $rmd_file (folder does not match $pattern)"
-                continue
-              fi
+              folder=$(dirname "$rmd")
+              echo "Rendering: $rmd"
 
-              echo "=== Rendering: $rmd_file ==="
-              rmd_dir=$(dirname "$rmd_file")
-
-              # Install dependencies if exists
-              if [ -f "$rmd_dir/install_dependencies.R" ]; then
-                echo "Installing dependencies..."
-                (cd "$rmd_dir" && Rscript install_dependencies.R) || true
-              fi
-
-              # Render
-              html_file="${rmd_file%.Rmd}.html"
-              if Rscript -e "rmarkdown::render('$rmd_file', output_file='$html_file')" 2>&1 | tee render.log; then
-                echo "SUCCESS: $rmd_file -> $html_file"
-                RENDERED_COUNT=$((RENDERED_COUNT + 1))
+              # Render to HTML
+              html="${rmd%.Rmd}.html"
+              if Rscript -e "rmarkdown::render('$rmd', output_file='$html')"; then
+                echo "OK: $rmd -> $html"
+                RENDERED=$((RENDERED + 1))
               else
-                echo "FAILED: $rmd_file"
-                FAILED_COUNT=$((FAILED_COUNT + 1))
-                cat render.log
+                echo "FAIL: $rmd"
+                FAILED=$((FAILED + 1))
               fi
-            done < <(find . -name "*.Rmd" -type f)
-
+            done
           done
 
-          echo ""
-          echo "=== Summary ==="
-          echo "Rendered: $RENDERED_COUNT files"
-          echo "Failed: $FAILED_COUNT files"
+          echo "Rendered: $RENDERED, Failed: $FAILED"
+          echo "rendered=$RENDERED" >> $GITHUB_OUTPUT
+          echo "failed=$FAILED" >> $GITHUB_OUTPUT
 
-          # List generated HTML files
-          echo ""
-          echo "=== Generated HTML files ==="
-          find . -name "*.html" -type f | grep -v "^./index.html" | head -20
-
-          echo "rendered_count=$RENDERED_COUNT" >> $GITHUB_OUTPUT
-          echo "failed_count=$FAILED_COUNT" >> $GITHUB_OUTPUT
-
-      - name: Commit and Push
+      - name: Commit and push
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
           git add -A
-
           if ! git diff --staged --quiet; then
-            echo "Committing rendered files..."
             git commit -m "Auto-render Rmd files"
             git push origin main || git push origin main --force
-          else
-            echo "No files to commit"
           fi
 
-      - name: Report status
+      - name: Report
         if: always()
         run: |
-          echo "Rendered: ${{ steps.render.outputs.rendered_count }} files"
-          echo "Failed: ${{ steps.render.outputs.failed_count }}"
+          echo "Rendered: ${{ steps.render.outputs.rendered }}"
+          echo "Failed: ${{ steps.render.outputs.failed }}"

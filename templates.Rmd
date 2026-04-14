@@ -22,18 +22,7 @@ knitr::opts_chunk$set(
 	warning = FALSE,
 	tidy = TRUE
 )
-library(rstudioapi)
-setwd(dirname(getActiveDocumentContext()$path))
-getwd()
 ```
-
-# 加载包
-```{r libraries}
-
-```
-
-
-
 
 ```{r}
 
