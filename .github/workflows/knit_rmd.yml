@@ -49,109 +49,98 @@ jobs:
         with:
           pandoc-version: '3.8.2'
 
-      - name: Install core R dependencies
-        run: Rscript -e 'install.packages(c("rmarkdown", "remotes"), repos="https://cloud.r-project.org")'
-
-      - name: Render Rmd files
-        id: render_rmd
+      - name: Install R packages
         run: |
-          # Check if auto_Knit_online.txt exists
-          if [ ! -f auto_Knit_online.txt ]; then
-            echo "auto_Knit_online.txt not found. Creating default list..."
-            # Find all Rmd files and extract folder names
-            find . -name "*.Rmd" -type f | while read -r rmd_file; do
-              dirname "$(dirname "$rmd_file")" | sed 's|^\./||' >> auto_Knit_online_default.txt
-            done
-            sort -u auto_Knit_online_default.txt | tee auto_Knit_online.txt
-            rm -f auto_Knit_online_default.txt
-          fi
+          Rscript -e 'install.packages(c("rmarkdown", "remotes", "sessioninfo"), repos="https://cloud.r-project.org")'
+          Rscript -e 'installed <- installed.packages()[,1]; writeLines(installed, "installed_packages.txt")'
 
-          # Read the file list
-          TO_KNIT=$(<auto_Knit_online.txt)
-          echo "Rendering files listed in auto_Knit_online.txt: $TO_KNIT"
+      - name: Show auto_Knit_online.txt content
+        run: |
+          echo "=== Files to knit ==="
+          cat auto_Knit_online.txt
+          echo "=================="
 
-          # Process each pattern
-          RENDER_SUMMARY=""
-          ANY_FILE_FAILED=false
+      - name: Find and render matching Rmd files
+        id: render
+        run: |
+          TO_KNIT=$(cat auto_Knit_online.txt)
+          echo "to_knit: $TO_KNIT"
+          echo "to_knit=$TO_KNIT" >> $GITHUB_OUTPUT
+
+          echo "=== Finding Rmd files ==="
+          find . -name "*.Rmd" -type f
+
+          RENDERED_COUNT=0
+          FAILED_COUNT=0
 
           for pattern in $TO_KNIT; do
+            echo ""
             echo "========== Processing: $pattern =========="
 
-            # Find matching Rmd files (folders containing the pattern)
+            # Find Rmd files matching the pattern
             while IFS= read -r rmd_file; do
               rmd_dir=$(dirname "$rmd_file")
-              rmd_basename=$(basename "$rmd_file")
+              folder_name="${rmd_dir#.}"
 
-              # Check if this folder should be rendered
-              folder_name=$(echo "$rmd_dir" | sed 's|^\./||')
+              # Check if folder contains the pattern
               if [[ ! "$folder_name" == *"$pattern"* ]]; then
+                echo "Skip: $rmd_file (folder does not match $pattern)"
                 continue
               fi
 
-              echo "--- Rendering: $rmd_file ---"
+              echo "=== Rendering: $rmd_file ==="
+              rmd_dir=$(dirname "$rmd_file")
 
-              # Install dependencies if install_dependencies.R exists
+              # Install dependencies if exists
               if [ -f "$rmd_dir/install_dependencies.R" ]; then
-                echo "Installing dependencies for $rmd_file..."
-                (cd "$rmd_dir" && Rscript install_dependencies.R > install.log 2>&1 || echo "WARNING: Dependency installation had issues.")
+                echo "Installing dependencies..."
+                (cd "$rmd_dir" && Rscript install_dependencies.R) || true
               fi
 
-              # Render the Rmd file
-              if Rscript -e "rmarkdown::render('$rmd_file', quiet=TRUE)" > rmd_render.log 2>&1; then
-                echo "[SUCCESS] - $rmd_file"
-                RENDER_SUMMARY="${RENDER_SUMMARY}[SUCCESS] - $rmd_file"$'\n'
+              # Render
+              html_file="${rmd_file%.Rmd}.html"
+              if Rscript -e "rmarkdown::render('$rmd_file', output_file='$html_file')" 2>&1 | tee render.log; then
+                echo "SUCCESS: $rmd_file -> $html_file"
+                RENDERED_COUNT=$((RENDERED_COUNT + 1))
               else
-                ANY_FILE_FAILED=true
-                echo "[FAILED] - $rmd_file"
-                RENDER_SUMMARY="${RENDER_SUMMARY}[FAILED] - $rmd_file"$'\n'
-                echo "--- Error Log ---"
-                tail -n 20 rmd_render.log
-                echo "--------------"
+                echo "FAILED: $rmd_file"
+                FAILED_COUNT=$((FAILED_COUNT + 1))
+                cat render.log
               fi
-            done < <(find . -type f -name "*.Rmd")
+            done < <(find . -name "*.Rmd" -type f)
 
           done
-          echo "job_failed=$ANY_FILE_FAILED" >> $GITHUB_OUTPUT
 
-      - name: Generate file list for downloads
-        run: |
-          python .github/scripts/generate_file_list.py
+          echo ""
+          echo "=== Summary ==="
+          echo "Rendered: $RENDERED_COUNT files"
+          echo "Failed: $FAILED_COUNT files"
 
-      - name: Upload Render Summary
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: render-summary
-          path: render_summary.txt
-          retention-days: 7
+          # List generated HTML files
+          echo ""
+          echo "=== Generated HTML files ==="
+          find . -name "*.html" -type f | grep -v "^./index.html" | head -20
 
-      - name: Commit and Push Files
-        if: always()
+          echo "rendered_count=$RENDERED_COUNT" >> $GITHUB_OUTPUT
+          echo "failed_count=$FAILED_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Commit and Push
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-          echo "Adding generated files..."
-          git add --all
+          git add -A
 
-          # Check for changes
           if ! git diff --staged --quiet; then
-            git commit -m "Auto-render Rmd files [skip ci]"
-
-            echo "Pushing to remote..."
-            if ! git push origin main; then
-              echo "Push failed, attempting force push..."
-              git push origin main --force
-            fi
+            echo "Committing rendered files..."
+            git commit -m "Auto-render Rmd files"
+            git push origin main || git push origin main --force
           else
-            echo "No new files to commit."
+            echo "No files to commit"
           fi
 
-      - name: Report Status
+      - name: Report status
         if: always()
         run: |
-          if [ "${{ steps.render_rmd.outputs.job_failed }}" = "true" ]; then
-            echo "::warning ::Some Rmd files failed to render. Check the 'render-summary' artifact."
-          else
-            echo "All Rmd files rendered successfully."
-          fi
+          echo "Rendered: ${{ steps.render.outputs.rendered_count }} files"
+          echo "Failed: ${{ steps.render.outputs.failed_count }}"
