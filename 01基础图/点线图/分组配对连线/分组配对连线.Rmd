@@ -1,0 +1,186 @@
+---
+title: "Learning"
+author: "Milaotou"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    number_sections: true
+    code_folding: hide
+    css: styles.css
+---
+# <span style="display: none;">设置代码块全局选项</span>{.unnumbered}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	fig.align = "center",
+	fig.height = 8,
+	fig.width = 10,
+	message = FALSE,
+	warning = FALSE,
+	tidy = TRUE
+)
+library(rstudioapi)
+setwd(dirname(getActiveDocumentContext()$path))
+getwd()
+```
+
+# 加载包
+```{r libraries}
+
+```
+
+
+
+
+```{r}
+
+```
+
+# Session info {.unnumbered}
+```{r session-info}
+sessioninfo::session_info()
+```
+
+
+```{r}
+# 使用gemini 2.5 pro生成代码，首先上传图片，让其识别图片主要信息，再给出提示1：1复现该图
+rm(list=ls())  # 清除环境变量  
+# 设置工作路径
+library(rstudioapi);setwd(dirname(getActiveDocumentContext()$'path'));getwd()
+# 加载包
+library(ggplot2)
+library(dplyr)
+library(patchwork)
+# 加载数据
+plot_data <- read.csv("data.csv")
+# 将 major_cell_type 和 condition 转换为因子类型，以确保绘图顺序正确
+plot_data$major_cell_type <- factor(plot_data$major_cell_type, 
+                                    levels = c("Fibroblast", "Macrophage", "Endothelial cell", "B cell"))
+plot_data$condition <- factor(plot_data$condition, 
+                              levels = c("Primary tumors", "Pre-nodal metastases"))
+# 保存数据，原始数据是模拟生成的，这里直接加载
+# write.csv(plot_data, "data.csv", row.names = FALSE)
+# 定义颜色
+color_mapping <- c(
+  "iCAF" = "#b8d5a3", "mCAF" = "#a2d1c6", "vCAF" = "#88abac",
+  "SPP1+ Macrophage" = "#e0a35f", "FOLR2+ Macrophage" = "#f3d8b8", "IDO1+ Macrophage" = "#ba8b4a",
+  "CPA3+ Macrophage" = "#d4a780", "S100A9+ Macrophage" = "#e9caa6", "CXCL9+ Macrophage" = "#a47c48",
+  "Vein" = "#f3b3ae", "Artery" = "#e66a6a", "Capillary" = "#c54444", "Lymphatic" = "#a13232",
+  "Naive" = "#dcd1e8", "Memory" = "#aa8ec2", "Plasma cell" = "#5c3a77"
+)
+
+# 定义形状
+shape_mapping <- c(
+  "iCAF" = 15, "mCAF" = 15, "vCAF" = 15, # Square
+  "SPP1+ Macrophage" = 18, "FOLR2+ Macrophage" = 18, "IDO1+ Macrophage" = 18,
+  "CPA3+ Macrophage" = 18, "S100A9+ Macrophage" = 18, "CXCL9+ Macrophage" = 18, # Diamond
+  "Vein" = 17, "Artery" = 17, "Capillary" = 17, "Lymphatic" = 17, # Triangle
+  "Naive" = 16, "Memory" = 16, "Plasma cell" = 16 # 6是Inverted Triangle，但没填充，改为圆填充16了
+)
+# 绘制分面配对连线图
+# 两层 geom_point()，一层用来画半透明的背景“光晕”，一层画前景的实心点
+main_plot <- ggplot(plot_data, aes(x = condition, y = proportion, 
+                                   group = cell_subtype, 
+                                   color = cell_subtype, 
+                                   shape = cell_subtype)) +
+  # 绘制连接线
+  geom_line(linewidth = 1.2) +
+  # 绘制半透明的背景 "光晕"
+  geom_point(size = 6, alpha = 0.3) +
+  # 绘制前景的实心点
+  geom_point(size = 5) +
+  # 按主要细胞类型分面
+  facet_wrap(~major_cell_type, nrow = 1, scales = "free_y") +
+  # 手动应用颜色和形状
+  scale_color_manual(values = color_mapping, name = NULL) +
+  scale_shape_manual(values = shape_mapping, name = NULL) +
+  # 设置Y轴标签
+  ylab("Cell proportion") +
+  # 美化主题
+  theme_classic() +
+  theme(
+    axis.title.x = element_blank(), # 移除x轴标题
+    axis.text.x = element_text(size = 12, color = "black",angle = 45,hjust = 1),
+    axis.text.y = element_text(size = 12, color = "black"),
+    axis.title.y = element_text(size = 14),
+    strip.background = element_rect(fill = "gray90", color = "gray90"), # 分面标题背景
+    strip.text = element_text(size = 14, face = "bold"),
+    panel.border = element_rect(colour = "black", fill=NA, linewidth=1), # 添加面板边框
+    legend.position = "bottom", # 图例置于底部
+    legend.text = element_text(size = 10)
+  ) +
+  # 将图例排成两行
+  guides(color = guide_legend(nrow = 3, byrow = TRUE))
+
+# 预览主图
+print(main_plot)
+# 顶部甜圈图
+# 创建一个函数，该函数接收一个主要细胞类型和状态（condition），然后生成一个圆环图。
+create_donut_chart <- function(major_type, cond, data, colors) {
+  
+  # 筛选数据并计算百分比
+  donut_df <- data %>%
+    filter(major_cell_type == major_type, condition == cond) %>%
+    mutate(percentage = proportion / sum(proportion)) %>%
+    arrange(desc(cell_subtype)) %>%
+    mutate(lab_ypos = cumsum(percentage) - 0.5 * percentage)
+  
+  # 获取当前类型对应的颜色
+  current_colors <- colors[names(colors) %in% donut_df$cell_subtype]
+  
+  ggplot(donut_df, aes(x = 2, y = percentage, fill = cell_subtype)) +
+    geom_bar(stat = "identity", color = "white") +
+    # 应用极坐标转换，变成饼图
+    coord_polar(theta = "y", start = 0) + 
+    # 应用颜色
+    scale_fill_manual(values = current_colors) +
+    # xlim设置中间的洞的大小，从而变成圆环图
+    xlim(0.5, 2.5) +
+    # 清理主题，使其仅保留圆环
+    theme_void() +
+    theme(legend.position = "none") # 移除图例
+}
+
+# 为每个分面生成一对圆环图
+donuts_fib <- create_donut_chart("Fibroblast", "Primary tumors", plot_data, color_mapping) +
+  create_donut_chart("Fibroblast", "Pre-nodal metastases", plot_data, color_mapping)
+
+donuts_mac <- create_donut_chart("Macrophage", "Primary tumors", plot_data, color_mapping) +
+  create_donut_chart("Macrophage", "Pre-nodal metastases", plot_data, color_mapping)
+
+donuts_endo <- create_donut_chart("Endothelial cell", "Primary tumors", plot_data, color_mapping) +
+  create_donut_chart("Endothelial cell", "Pre-nodal metastases", plot_data, color_mapping)
+
+donuts_bcell <- create_donut_chart("B cell", "Primary tumors", plot_data, color_mapping) +
+  create_donut_chart("B cell", "Pre-nodal metastases", plot_data, color_mapping)
+
+# 将所有圆环图组合成一行
+all_donuts <- (donuts_fib | donuts_mac | donuts_endo | donuts_bcell)
+# 组合最终图表
+# 使用 / 操作符将圆环图放在主图上方
+final_plot <- all_donuts / main_plot + 
+  # 设置布局，让圆环图部分高度较小
+  plot_layout(heights = c(1, 5))
+
+# 显示或保存最终的图片
+print(final_plot)
+
+# 如果需要保存图片
+# png("分组配对连线.png",width = 10,height = 10,unit = "in",res = 600,family = "serif")
+# dev.off()
+
+```
+
+# Save plot
+ggsave("分组配对连线.png", width = 10, height = 8, dpi = 300)
+
+```
+
+# Session info
+```{r session-info}
+sessioninfo::session_info()
+```
+

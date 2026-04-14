@@ -1,5 +1,5 @@
 ---
-title: "泳道图"
+title: "Learning"
 author: "Milaotou"
 date: "`r Sys.Date()`"
 output:
@@ -25,6 +25,23 @@ knitr::opts_chunk$set(
 library(rstudioapi)
 setwd(dirname(getActiveDocumentContext()$path))
 getwd()
+```
+
+# 加载包
+```{r libraries}
+
+```
+
+
+
+
+```{r}
+
+```
+
+# Session info {.unnumbered}
+```{r session-info}
+sessioninfo::session_info()
 ```
 
 
@@ -521,7 +538,7 @@ ggsave("swimmers_plot.png", width = 10, height = 10)
 
 ```
 
-# Session info {.unnumbered}
+# Session info
 ```{r session-info}
 sessioninfo::session_info()
 ```

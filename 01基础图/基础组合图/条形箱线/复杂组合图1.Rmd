@@ -1,0 +1,335 @@
+---
+title: "Learning"
+author: "Milaotou"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    number_sections: true
+    code_folding: hide
+    css: styles.css
+---
+# <span style="display: none;">设置代码块全局选项</span>{.unnumbered}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	fig.align = "center",
+	fig.height = 8,
+	fig.width = 10,
+	message = FALSE,
+	warning = FALSE,
+	tidy = TRUE
+)
+library(rstudioapi)
+setwd(dirname(getActiveDocumentContext()$path))
+getwd()
+```
+
+# 加载包
+```{r libraries}
+
+```
+
+
+
+
+```{r}
+
+```
+
+# Session info {.unnumbered}
+```{r session-info}
+sessioninfo::session_info()
+```
+
+
+```{r}
+# 设置工作路径
+library(rstudioapi);setwd(dirname(getActiveDocumentContext()$'path'));getwd()
+data <- read.csv("df.csv",skip = 1,check.names = F) # 跳过第一行表头
+suppressMessages(library(tidyverse))
+
+order_vec <- c("P1","P2","P3","P4","P6","P5","P7","P9","P15","P11","P12","P22","P24",
+               "P38","P57","P72","P76","P79","P98","P105","P114",
+               "P119","P128","P135","P187","P192","P197")
+# 处理数据1
+data1 <- data %>% select(76:98) %>% 
+  pivot_longer(
+    cols = everything(),          # 把所有列转换
+    names_to = "Group",           # 分组列名
+    values_to = "Value"           # 数值列名
+  ) %>% 
+  mutate(
+    Group = factor(Group, levels = rev(order_vec))   # 严格指定顺序
+  )
+# 绘图p1
+# 绘制箱线图
+p1 <- ggplot(data1, aes(x = Value, y = Group)) +
+  geom_boxplot(color = "#AA638B", fill = NA, outlier.colour = "#AA638B",
+               outlier.shape = 16, outlier.size = 0.2,
+               width = 0.9) +   # 箱线图红色
+  geom_jitter(color = "#AA638B", width = 0.2, alpha = 0.5) + # 散点红色
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.y = element_blank(),
+    panel.grid = element_blank(),       # 去掉所有网格
+    axis.line.x = element_line(color="black"),  # 保留 x 轴线
+    axis.ticks.x = element_line(color="black")  # 保留 x 轴刻度小线
+  ) +
+  labs(title = "",
+       y ="",
+       x = "ARG number") +
+  scale_x_continuous(limits = c(0, 20), breaks = c(0, 10, 20))+
+  # 添加灰色标题背景
+  annotate("rect", xmin = 0, xmax = 20, ymin = length(unique(data1$Group)) + 2,
+           ymax = length(unique(data1$Group)) + 3.5, fill = "grey80") +
+  # 添加标题文字
+  annotate("text", x = 10, y = length(unique(data1$Group)) + 2.7,
+           label = "ARG\nnumber", color = "black", size = 2.5)
+p1
+# ======
+data2 <- data %>% select(70:73) %>% 
+  pivot_longer(cols = c(Conj, mob_unconj, unmob), 
+               names_to = "Category", 
+               values_to = "Percentage") %>%          # 把所有列转换
+  rename(Group = `cir-group`) %>%   # 反引号保留特殊字符
+  mutate(
+    Group = factor(Group, levels = rev(order_vec))   # 严格指定顺序
+  )
+# 绘制图2
+# 绘制堆叠柱状图
+p2 <- ggplot(data2, aes(x = Percentage, y = Group, fill = Category)) +
+  geom_col(position = "stack") +
+  scale_fill_manual(values = c("Conj" = "#93A0CA","mob_unconj" = "#E38C66", 
+                               "unmob" = "#89C1A6")) +
+  labs(title = "",
+       x = "Percentage (%)",
+       y ="",
+       fill = "Mob type") +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),
+    panel.grid = element_blank(),       # 去掉所有网格
+    axis.line.x = element_line(color="black"),  # 保留 x 轴线
+    axis.ticks.x = element_line(color="black")  # 保留 x 轴刻度小线
+  )+
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5))+
+  scale_x_continuous(limits = c(0, 100), breaks = c(0, 50, 100))+
+  # 添加灰色标题背景
+  annotate("rect", xmin = 0, xmax = 100, ymin = length(unique(data2$Group)) + 2,
+           ymax = length(unique(data2$Group)) + 3.5, fill = "grey80") +
+  # 添加标题文字
+  annotate("text", x = 50, y = length(unique(data2$Group)) + 2.7,
+           label = "Mob type", color = "black", size = 5)
+p2
+# ========
+# 处理数据3
+data3 <- data %>% select(46:68) %>% 
+  pivot_longer(
+    cols = everything(),          # 把所有列转换
+    names_to = "Group",           # 分组列名
+    values_to = "Value"           # 数值列名
+  ) %>% 
+  mutate(
+    Group = factor(Group, levels = rev(order_vec))   # 严格指定顺序
+  )
+# 绘制图3
+# 绘制箱线图
+p3 <- ggplot(data3, aes(x = Value, y = Group)) +
+  geom_boxplot(color = "#AA638B", fill = NA, outlier.colour = "#AA638B",
+               outlier.shape = 16, outlier.size = 0.2,
+               width = 0.9) +   # 箱线图红色
+  geom_jitter(color = "#AA638B", width = 0.2, alpha = 0.5) + # 散点红色
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.y = element_blank(),
+    panel.grid = element_blank(),       # 去掉所有网格
+    axis.line.x = element_line(color="black"),  # 保留 x 轴线
+    axis.ticks.x = element_line(color="black")  # 保留 x 轴刻度小线
+  ) +
+  labs(title = "",
+       y ="",
+       x = "Copy number") +
+  scale_x_continuous(limits = c(0, 150), breaks = c(0, 50, 100,150))+
+  # 添加灰色标题背景
+  annotate("rect", xmin = 0, xmax = 150, ymin = length(unique(data3$Group)) + 2,
+           ymax = length(unique(data3$Group)) + 3.5, fill = "grey80") +
+  # 添加标题文字
+  annotate("text", x = 75, y = length(unique(data3$Group)) + 2.7,
+           label = "Copy\nnumber", color = "black", size = 2.5)
+p3
+# =======
+data4 <- data %>% select(21:43) %>% 
+  pivot_longer(
+    cols = everything(),          # 把所有列转换
+    names_to = "Group",           # 分组列名
+    values_to = "Value"           # 数值列名
+  ) %>% 
+  mutate(
+    Group = factor(Group, levels = rev(order_vec))   # 严格指定顺序
+  )
+# 绘制箱线图
+p4 <- ggplot(data4, aes(x = Value, y = Group)) +
+  geom_boxplot(color = "#82ABC0", fill = NA, outlier.colour = "#82ABC0",
+               outlier.shape = 16, outlier.size = 0.2,
+               width = 0.9) +   # 箱线图红色
+  geom_jitter(color = "#82ABC0", width = 0.2, alpha = 0.5) + # 散点红色
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.y = element_blank(),
+    panel.grid = element_blank(),       # 去掉所有网格
+    axis.line.x = element_line(color="black"),  # 保留 x 轴线
+    axis.ticks.x = element_line(color="black")  # 保留 x 轴刻度小线
+  ) +
+  labs(title = "",
+       y ="",
+       x = "Length\n(bp, Log10)") +
+  scale_x_continuous(limits = c(3, 6), breaks = c(3, 4, 5, 6))+
+  # 添加灰色标题背景
+  annotate("rect", xmin = 3, xmax = 6, ymin = length(unique(data4$Group)) + 2,
+           ymax = length(unique(data4$Group)) + 3.5, fill = "grey80") +
+  # 添加标题文字
+  annotate("text", x = 4.5, y = length(unique(data4$Group)) + 2.7,
+           label = "Length\ndistribution", color = "black", size = 2.5)  # x轴设置 0,10,20
+p4
+# =======
+order_vec2 <- c("A","B1", "B2", "C","D" ,"F","G", "cladeI")
+data5 <- data %>%select(10:18) %>% 
+  pivot_longer(cols =  c(-Host_phylogroup),
+               names_to = "Group",
+               values_to = "Percentage") %>%
+  mutate(Host_phylogroup = factor(Host_phylogroup, levels = rev(order_vec)),
+         Group = factor(Group, levels = rev(order_vec2)))
+# 绘制堆叠柱状图
+p5 <- ggplot(data5, aes(x = Percentage, y = Host_phylogroup, fill = Group)) +
+  geom_col(position = "stack") +
+  scale_fill_manual(values = c("A" = "#B3B3B3", 
+                               "B1" = "#DCC496", 
+                               "B2" = "#F5D943",
+                               "C" = "#B6D95E",
+                               "D" = "#D18BC1",
+                               "F" = "#93A0CA",
+                               "G" = "#E38C66",
+                               "cladeI" = "#89C1A6")) +
+  labs(title = "",
+       x = "Percentage (%)",
+       y ="",
+       fill = "phylogroup") +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),
+    panel.grid = element_blank(),       # 去掉所有网格
+    axis.line.x = element_line(color="black"),  # 保留 x 轴线
+    axis.ticks.x = element_line(color="black")  # 保留 x 轴刻度小线
+  )+
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5))+
+  scale_x_continuous(limits = c(0, 105), breaks = c(0, 50, 100))+
+  # 添加灰色标题背景
+  annotate("rect", xmin = 0, xmax = 100, ymin = length(unique(data5$Host_phylogroup)) + 2,
+           ymax = length(unique(data5$Host_phylogroup)) + 3.5, fill = "grey80") +
+  # 添加标题文字
+  annotate("text", x = 50, y = length(unique(data5$Host_phylogroup)) + 2.7,
+           label = "Host phylogroup", color = "black", size = 5)
+p5
+# =============
+order_vec3 <- c("Human","Animal","Environment")
+data6 <- data %>% select(5:8) %>% 
+  pivot_longer(cols = c(Human,Animal,Environment),
+               names_to = "Group",
+               values_to = "Value") %>%
+  mutate(`Ecolohical sector` = factor(`Ecolohical sector`,levels = rev(order_vec)),
+         Group =factor(Group,levels = rev(order_vec3)))
+
+# 绘制堆叠柱状图
+# 流向条必须是x轴为离散变量，对于p6，我们先正常，后续翻转来搞定
+library(ggalluvial)
+p6 <- ggplot(data6, aes(x = `Ecolohical sector`, y =Value , fill = Group,group = Group, alluvium = Group, stratum = Group)) +
+  geom_col(position = "stack",width = 0.4) +
+  geom_alluvium(aes(stratum = Group), width = 0.4, alpha = 0.4,color="white",linewidth = 0.8,curve_type = "arctangent") +
+  geom_stratum(width = 0.4, alpha = 0.8,color="white") +
+  scale_fill_manual(values = c("Human" = "#D597C3", 
+                               "Animal" = "#A0BBA3", 
+                               "Environment" = "#BAC9F7")
+  )+
+  labs(title = "",
+       x = "Number",
+       y ="",
+       fill = "Ecolohical sector") +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(),
+    panel.grid = element_blank(),       # 去掉所有网格
+    axis.line.x = element_line(color="black"),  # 保留 x 轴线
+    axis.ticks.x = element_line(color="black")  # 保留 x 轴刻度小线
+  )+
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5))+
+  coord_flip() + # 随时帮你把图转 90°
+  scale_y_reverse(limits = c(45, 0), breaks = seq(0, 45, 20)) + # y翻转，左右
+  # 添加灰色标题背景
+  annotate("rect", ymin = 0, ymax = 45, xmin = length(unique(data6$`Ecolohical sector`)) + 2,
+           xmax = length(unique(data6$`Ecolohical sector`)) + 3.5, fill = "grey80") +
+  # 添加标题文字
+  annotate("text", y = 22.5, x = length(unique(data6$`Ecolohical sector`)) + 2.7,
+           label = "Ecolohical sector", color = "black", size = 5)
+p6
+# ===========
+# 先组合这些，桑基后面再说
+###############################桑基图#######################
+data7 <- data %>% select(1:3)
+# 把数据转回成ggsankey需要的原始数据
+level1_to_2 <- data7 %>% filter(target %in% c("Human", "Animal", "Environment"))
+level2_to_3 <- data7 %>% filter(!target %in% c("Human", "Animal", "Environment"))
+# 合并成完整的三层级数据
+data_full <- level1_to_2 %>%
+  inner_join(level2_to_3, by = c("target" = "source"), relationship = "many-to-many") %>%
+  mutate(value = pmin(value.x, value.y)) %>%
+  select(level1 = source, level2 = target, level3 = target.y, value) %>%
+  filter(value > 0)
+# 转换为ggsankey格式
+data_7 <- full_data %>%
+  make_long(level1, level2, level3, value = value)
+  
+  
+
+# 绘制图形
+p7 <- ggplot(data_7, aes(x = x, 
+                               next_x = next_x, 
+                               node = node, 
+                               next_node = next_node, 
+                               fill = factor(node),
+                               value = value,
+                               label = node)) +
+  geom_sankey(flow.alpha = 0.6,
+              node.color = "gray30",
+              width = 0.08) +
+  geom_sankey_label(size = 2.5, color = "white", fill = "gray40") +
+  cols4all::scale_fill_discrete_c4a_cat("morgenstern")+  # 调用填充
+  theme_sankey(base_size = 14) +
+  labs(x = NULL, title = "Full Three-level Sankey") +
+  theme(legend.position = "none")
+
+
+library(aplot)
+p <- p1 %>% 
+  insert_right(p2) %>% 
+  insert_right(p3) %>% 
+  insert_right(p4)%>% 
+  insert_right(p5)%>% 
+  insert_right(p6)
+p
+# p7没法组合
+
+```
+
+# Save plot
+ggsave("复杂组合图1.png", width = 10, height = 8, dpi = 300)
+
+```
+
+# Session info
+```{r session-info}
+sessioninfo::session_info()
+```
+
