@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>FigureYa Results Browser</title>
+  <title>Rcodepages Results Browser</title>
   <link rel="icon" type="image/svg+xml" href="logo.svg">
   <link rel="apple-touch-icon" href="logo.svg">
   <script src="js/fuse.min.js"></script>
@@ -134,7 +134,7 @@
         fileList.innerHTML = `
           <div style="text-align:center;padding:40px;color:#e53e3e;">
             <p>No file list found for ${folderName}</p>
-            <a href="https://github.com/ying-ge/FigureYa/tree/main/${folderName}" target="_blank"
+            <a href="https://github.com/mlaotou/Rcodepages/tree/main/${folderName}" target="_blank"
                style="color:#3182ce;text-decoration:none;margin-top:16px;display:inline-block;">
               View on GitHub →
             </a>
@@ -178,7 +178,7 @@
           </div>
           <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;
                       display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
-            <a href="https://github.com/ying-ge/FigureYa/tree/main/${folderName}" target="_blank"
+            <a href="https://github.com/mlaotou/Rcodepages/tree/main/${folderName}" target="_blank"
                style="color:#718096;text-decoration:none;font-size:0.9em;">
               🔗 View on GitHub
             </a>
@@ -229,7 +229,7 @@
         const zip = new JSZip();
         const folder = zip.folder(folderName);
 
-        const baseUrl = `https://raw.githubusercontent.com/ying-ge/FigureYa/main/${folderName}/`;
+        const baseUrl = `https://raw.githubusercontent.com/mlaotou/Rcodepages/main/${folderName}/`;
 
         for (const filename of selected) {
           const url = baseUrl + filename;
@@ -610,12 +610,12 @@
 
 <header class="header">
   <div class="header-left">
-    <img src="logo.svg" alt="FigureYa Logo" class="header-logo">
-    <span class="header-title">FigureYa</span>
+    <img src="logo.svg" alt="Rcodepages Logo" class="header-logo">
+    <span class="header-title">Rcodepages</span>
   </div>
   <nav class="header-nav">
     <a onclick="showCitation()">Citation</a>
-    <a href="https://zread.ai/ying-ge/FigureYa" target="_blank">FigureYa AI Assistant</a>
+    <a href="https://zread.ai/mlaotou/Rcodepages" target="_blank">FigureYa AI Assistant</a>
     <a onclick="showContact()">Contact</a>
   </nav>
 </header>

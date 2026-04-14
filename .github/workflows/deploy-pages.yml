@@ -32,7 +32,9 @@ jobs:
         run: pip install --no-cache-dir beautifulsoup4
 
       - name: Generate searchable index
-        run: python .github/scripts/generate_searchable_index.py
+        run: |
+          python .github/scripts/generate_searchable_index.py
+          python .github/scripts/generate_file_list.py
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
