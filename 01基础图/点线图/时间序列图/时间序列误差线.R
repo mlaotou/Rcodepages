@@ -1,0 +1,78 @@
+rm(list=ls())  # 清除环境变量  
+# 设置工作路径
+library(rstudioapi);setwd(dirname(getActiveDocumentContext()$'path'));getwd()
+
+# 加载必要的包
+library(ggplot2)
+library(readxl)   # 读取Excel文件
+
+# 读入数据
+data <- read_excel("data_1.xlsx")
+
+# 转换为长格式
+data_long <- data.frame(
+  time = c(data$`Time (s)`, data$`Time (s)`),
+  group = rep(c("Fasted", "4 weeks HPD"), each = nrow(data)),
+  average = c(data$Fasted_Average, data$HPD_Average),
+  SEM = c(data$Fasted_SEM, data$HPD_SEM)
+)
+
+# 定义展示顺序
+data_long$group <- factor(data_long$group, levels = c("4 weeks HPD", "Fasted"))
+
+# 定义颜色
+my_color = c("#c1966b", "#642e8e")
+# 绘图
+ggplot(data_long, aes(x = time, y = average, fill = group, color = group)) +
+  geom_ribbon(aes(ymin = average - SEM, ymax = average + SEM), 
+              alpha = 0.2, color = NA) + 
+  geom_line(linewidth = 0.7) +
+  geom_vline(xintercept = c(20, 30), linetype = "dashed", color = "grey50") +
+  scale_fill_manual(values = my_color) +         
+  scale_color_manual(values = my_color) +        
+  guides(fill = guide_legend(override.aes = list(color = my_color, fill = my_color, 
+                                                 alpha = 0.3, linewidth = 0.6)),
+         color = "none") +
+  scale_x_continuous(limits = c(0, 50), expand = c(0, 0)) +     
+  scale_y_continuous(limits = c(-6, 8), breaks = seq(-6, 8, 2), expand = c(0, 0)) +     
+  labs(x = "Time (s)", y = "ΔF/F (%)") +  
+  theme_classic(base_size = 12) +
+  theme(axis.title = element_text(size = 11),   
+        axis.text = element_text(size = 11, color = "black"),   
+        axis.ticks.length = unit(-3, "pt"),
+        legend.title = element_blank(),  
+        legend.text = element_text(size = 11),  
+        legend.position = c(0.9, 0.95),
+        legend.key.size = unit(10, "pt"),
+        legend.key.spacing.y = unit(5, 'pt'),
+        plot.margin = margin(15, 30, 10, 10, unit = "pt")) + 
+  theme(text=element_text(family="serif")) 
+ggsave(filename = "时间序列误差线1.png",height = 6,width = 6,units ="in")
+
+# 绘图2，分面展示
+library(ggh4x)
+ggplot(data_long, aes(x = time, y = average, fill = group, color = group)) +
+  geom_ribbon(aes(ymin = average - SEM, ymax = average + SEM), 
+              alpha = 0.2, color = NA) + 
+  geom_line(linewidth = 0.7) +
+  geom_vline(xintercept = c(20, 30), linetype = "dashed", color = "grey50") +
+  scale_fill_manual(values = my_color) +         
+  scale_color_manual(values = my_color) +        
+  facet_wrap2(~ group, scales = "free_y",
+             strip = strip_nested(background_x = element_blank())) +
+  scale_x_continuous(limits = c(0, 50), expand = c(0, 0)) +     
+  scale_y_continuous(limits = c(-6, 8), breaks = seq(-6, 8, 2), expand = c(0, 0)) + 
+  guides(colour = "none", fill = "none") +
+  labs(x = "Time (s)", y = "ΔF/F (%)") +  
+  theme_classic(base_size = 12) +
+  theme(axis.title = element_text(size = 11),   
+        axis.text = element_text(size = 11, color = "black"),   
+        axis.ticks.length = unit(-3, "pt"),
+        legend.title = element_blank(),  
+        legend.text = element_text(size = 11),  
+        legend.position = c(0.9, 0.95),
+        legend.key.size = unit(10, "pt"),
+        legend.key.spacing.y = unit(5, 'pt'),
+        plot.margin = margin(15, 30, 10, 10, unit = "pt")) + 
+  theme(text=element_text(family="serif")) 
+ggsave(filename = "时间序列误差线1.png",height = 6,width = 6,units ="in")

@@ -1,0 +1,109 @@
+{
+  "repo_url": "https://github.com/mlaotou/MyRcode",
+  "current_tab": {
+    "tabId": 1574739443,
+    "pageTitle": "mlaotou/MyRcode",
+    "pageUrl": "https://github.com/mlaotou/MyRcode"
+  },
+  "goal": "在每次 push 到 main 分支时，自动用 GitHub Actions 渲染仓库中的 R/Rmd（或直接打包已有静态 HTML），并把生成的静态站点发布到 GitHub Pages（推荐使用官方 Pages-from-Actions 流程，输出目录 public/）。",
+  "workflow": {
+    "filename": ".github/workflows/publish-pages.yml",
+    "trigger": {
+      "on_push_branches": ["main"],
+      "manual_dispatch": true
+    },
+    "permissions": {
+      "contents": "read",
+      "pages": "write",
+      "id-token": "write"
+    },
+    "jobs": [
+      {
+        "id": "build",
+        "runs_on": "ubuntu-latest",
+        "steps": [
+          "actions/checkout@v4",
+          "r-lib/actions/setup-r@v2",
+          {
+            "name": "Install system packages (if needed)",
+            "run": "sudo apt-get update && sudo apt-get install -y libxml2-dev libssl-dev libcurl4-openssl-dev"
+          },
+          {
+            "name": "Install R packages",
+            "run": "R -e \"install.packages(c('rmarkdown','knitr','bookdown','pagedown'), repos='https://cloud.r-project.org')\""
+          },
+          {
+            "name": "Render site to public/",
+            "run": "mkdir -p public && Rscript -e \"rmarkdown::render_site(output_dir = 'public')\"",
+            "notes": "如果仓库使用单个 Rmd，请替换为 rmarkdown::render('path/to/file.Rmd', output_file='public/index.html')；如果使用 bookdown/blogdown，替换为对应构建命令。"
+          },
+          {
+            "name": "Configure Pages",
+            "uses": "actions/configure-pages@v3"
+          },
+          {
+            "name": "Upload Pages artifact",
+            "uses": "actions/upload-pages-artifact@v1",
+            "with": {
+              "path": "./public"
+            }
+          }
+        ]
+      },
+      {
+        "id": "deploy",
+        "needs": ["build"],
+        "runs_on": "ubuntu-latest",
+        "steps": [
+          {
+            "name": "Deploy to GitHub Pages",
+            "uses": "actions/deploy-pages@v2"
+          }
+        ]
+      }
+    ]
+  },
+  "alternative_deploy_option": {
+    "method": "push_to_gh-pages_branch",
+    "description": "如果偏好把静态文件推到 gh-pages 分支，可用 peaceiris/actions-gh-pages 将 public/ 推送到 gh-pages。",
+    "example_action": {
+      "uses": "peaceiris/actions-gh-pages@v4",
+      "with": {
+        "github_token": "${{ secrets.GITHUB_TOKEN }}",
+        "publish_dir": "./public",
+        "publish_branch": "gh-pages"
+      }
+    }
+  },
+  "build_inputs_and_paths": {
+    "source_rmd_paths": "仓库根或指定子目录下的 *.Rmd（示例: reports/*.Rmd）",
+    "static_assets": "确保 CSS/JS/图片使用相对路径或基于 baseurl 的正确路径",
+    "output_dir": "public",
+    "expected_entry": "public/index.html"
+  },
+  "dependencies": {
+    "r_packages": ["rmarkdown", "knitr", "bookdown", "pagedown"],
+    "system_packages": ["libxml2-dev", "libssl-dev", "libcurl4-openssl-dev"]
+  },
+  "error_handling_and_checks": {
+    "check_1": "Actions 日志：若 R 包安装失败，记录失败包名并在 workflow 中重试或增加系统依赖安装步骤。",
+    "check_2": "构建后验证 public/ 包含 index.html；若缺失则标记构建失败并输出目录树（ls -R public）。",
+    "check_3": "部署后在 Pages 设置或 Actions 输出中确认部署成功并返回 Pages URL。",
+    "notifications": "可选：在失败时通过 Actions 通知（email/Slack）或在 workflow 中上传构建日志作为 artifact。"
+  },
+  "testing_and_local_validation": {
+    "local_render_command": "Rscript -e \"rmarkdown::render_site(output_dir = 'public')\"",
+    "local_preview": "python3 -m http.server 8000 --directory public 或 使用 live-server 预览",
+    "path_checks": "确认 HTML 中资源引用为相对路径（./assets/...）或正确的 baseurl"
+  },
+  "deliverables_expected_from_agent": [
+    "完整的 publish-pages.yml workflow 文件（按上面字段填充）",
+    "若需要，生成一个可选的 deploy.sh 脚本用于本地或 CI 调试（包含安装系统依赖、安装 R 包、渲染命令、目录检查）",
+    "README 部署说明片段，包含如何在仓库 Settings → Pages 启用 Pages-from-Actions 或选择 gh-pages 分支"
+  ],
+  "assumptions_and_notes": {
+    "assume_branch": "main 为主分支；如不同请替换为实际分支名",
+    "assume_output_dir": "public；如需改为 docs/，请在 workflow 与 Pages 设置中同步修改",
+    "first_time_pages_setup": "首次使用 gh-pages 分支或 Actions 发布时，可能需要在仓库 Settings → Pages 手动选择发布源并允许 Actions 发布权限"
+  }
+}

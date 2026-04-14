@@ -1,0 +1,149 @@
+# 加载必要的包
+library(ggplot2)
+library(reshape2)
+library(dplyr)
+library(tidyr)
+library(gridExtra)
+library(labeling)
+# 创建数据框
+data <- data.frame(
+  Sample = c("CK_1", "CK_2", "CK_3", "MIC_1", "MIC_2", "MIC_3"),
+  
+  # gene-G4B84_010504
+  RT_qPCR_010504 = c(0.884174505, 1.134772457, 0.981053038, 0.40120265, 0.490526519, 0.460860824),
+  FPKM_010504 = c(4.652996169, 13.64163897, 7.13767676, 0.992287611, 1.588532528, 1.090821212),
+  
+  # gene-G4B84_007168
+  RT_qPCR_007168 = c(0.987640978, 1.134501567, 0.877857455, 0.669919012, 0.753698069, 0.514790952),
+  FPKM_007168 = c(7.208936095, 9.523951359, 10.34046726, 3.478107382, 2.600246075, 5.035993853),
+  
+  # gene-G4B84_006789
+  RT_qPCR_006789 = c(0.952088891, 1.108929908, 0.938981201, 2.410225582, 3.050758924, 2.393576938),
+  FPKM_006789 = c(36.77143956, 39.64799063, 40.24347662, 142.0834937, 119.039116, 62.92738495),
+  
+  # gene-G4B84_005809
+  RT_qPCR_005809 = c(1.039554285, 0.96323859, 0.997207125, 0.322185863, 0.419273949, 0.322185863),
+  FPKM_005809 = c(7.767495424, 19.10109394, 13.26683249, 4.00985775, 3.47962257, 5.500479986),
+  
+  # gene-G4B84_005687
+  RT_qPCR_005687 = c(0.949581599, 1.053626754, 0.996791647, 0.46180762, 0.635235694, 0.508868179),
+  FPKM_005687 = c(165.31662, 274.5272227, 262.3317848, 54.40286627, 43.62969483, 81.83674129),
+  
+  # gene-G4B84_001001
+  RT_qPCR_001001 = c(1.214007544, 0.939377789, 0.846614667, 2.531122597, 2.968589042, 2.907496363),
+  FPKM_001001 = c(20.43455617, 21.39636576, 23.00866309, 110.7194516, 91.78860592, 60.63921535)
+)
+
+# 添加分组信息
+data$Group <- ifelse(grepl("CK", data$Sample), "CK", "MIC")
+
+# 函数：为每个基因创建图形
+create_dual_axis_plot <- function(gene_id, rt_qPCR_col, FPKM_col) {
+  
+  # 计算均值和标准差
+  summary_data <- data %>%
+    group_by(Group) %>%
+    summarise(
+      RT_qPCR_mean = mean(.data[[rt_qPCR_col]]),
+      RT_qPCR_sd = sd(.data[[rt_qPCR_col]]),
+      FPKM_mean = mean(.data[[FPKM_col]]),
+      FPKM_sd = sd(.data[[FPKM_col]])
+    )
+  
+  # 创建双Y轴图形
+  p1 <- ggplot(summary_data, aes(x = Group)) +
+    # 柱形图 - RT-qPCR (左侧Y轴)
+    geom_col(aes(y = RT_qPCR_mean, fill = "RT-qPCR"), 
+             position = position_dodge(0.8), width = 0.5, alpha = 0.7) +
+    geom_errorbar(aes(ymin = RT_qPCR_mean - RT_qPCR_sd, 
+                      ymax = RT_qPCR_mean + RT_qPCR_sd),
+                  width = 0.2, position = position_dodge(0.8)) +
+    
+    # 点线图 - FPKM (右侧Y轴)
+    geom_line(aes(y = FPKM_mean / max(FPKM_mean) * max(RT_qPCR_mean) * 1.2, 
+                  group = 1, color = "FPKM"), 
+              size = 1) +
+    geom_point(aes(y = FPKM_mean / max(FPKM_mean) * max(RT_qPCR_mean) * 1.2, 
+                   color = "FPKM"), 
+               size = 3) +
+    geom_errorbar(aes(ymin = (FPKM_mean - FPKM_sd) / max(FPKM_mean) * max(RT_qPCR_mean) * 1.2,
+                      ymax = (FPKM_mean + FPKM_sd) / max(FPKM_mean) * max(RT_qPCR_mean) * 1.2),
+                  width = 0.1, color = "red") +
+    
+    # 双Y轴设置
+    scale_y_continuous(
+      name = "RT-qPCR Expression",
+      breaks = function(x) {
+        seq(0, max(x), length.out = 4)
+      },
+      labels = function(x) sprintf("%.2f", x),
+      sec.axis = sec_axis(~ . / max(summary_data$RT_qPCR_mean) * max(summary_data$FPKM_mean) / 1.2, 
+                          name = "FPKM",
+                          breaks = function(x) {
+                            seq(0, max(x), length.out = 4)
+                          },
+                          labels = function(x) sprintf("%.2f", x))
+    ) +
+    
+    # 颜色和填充设置
+    scale_fill_manual(values = c("RT-qPCR" = "blue")) +
+    scale_color_manual(values = c("FPKM" = "red")) +
+    
+    # 标题和标签
+    labs(title = paste(gsub("gene-", "", gene_id)),
+         x = "",
+         fill = "",
+         color = "") +
+    
+    # 主题设置
+    theme_bw() +
+    theme(
+      panel.grid = element_blank(),
+      plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+      axis.title.y = element_text(color = "blue"),
+      axis.title.y.right = element_text(color = "red"),
+      legend.position = "top"
+    )
+  
+  return(p1)
+}
+
+# 为每个基因创建图形
+genes <- list(
+  "gene-G4B84_010504" = c("RT_qPCR_010504", "FPKM_010504"),
+  "gene-G4B84_007168" = c("RT_qPCR_007168", "FPKM_007168"),
+  "gene-G4B84_006789" = c("RT_qPCR_006789", "FPKM_006789"),
+  "gene-G4B84_005809" = c("RT_qPCR_005809", "FPKM_005809"),
+  "gene-G4B84_005687" = c("RT_qPCR_005687", "FPKM_005687"),
+  "gene-G4B84_001001" = c("RT_qPCR_001001", "FPKM_001001")
+)
+
+# 创建所有图形
+plots <- list()
+for (gene in names(genes)) {
+  plots[[gene]] <- create_dual_axis_plot(gene, genes[[gene]][1], genes[[gene]][2])
+}
+
+# 显示图形（每行2个）
+grid.arrange(grobs = plots, ncol = 2)
+
+# 可选：单独保存每个图形
+# for (i in 1:length(plots)) {
+#   ggsave(paste0(names(plots)[i], "_plot.png"), plots[[i]], 
+#          width = 8, height = 6, dpi = 300)
+# }
+
+# 显示统计摘要
+cat("Statistical Summary:\n")
+for (gene in names(genes)) {
+  cat("\n", gene, ":\n")
+  summary <- data %>%
+    group_by(Group) %>%
+    summarise(
+      RT_qPCR_mean = mean(.data[[genes[[gene]][1]]]),
+      RT_qPCR_sd = sd(.data[[genes[[gene]][1]]]),
+      FPKM_mean = mean(.data[[genes[[gene]][2]]]),
+      FPKM_sd = sd(.data[[genes[[gene]][2]]])
+    )
+  print(summary)
+}
