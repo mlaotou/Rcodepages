@@ -71,17 +71,26 @@ def convert_r_to_rmd(r_file_path):
     # Clean R code
     cleaned_code = clean_r_code(r_content)
 
-    # Check for plotting
-    has_plot = any(p in cleaned_code for p in ['ggplot', 'plot(', 'geom_', 'ggsave'])
+    # Check for ggplot (can use ggsave)
+    has_ggplot = 'ggplot' in cleaned_code or 'geom_' in cleaned_code
+
+    # Check for base plot (needs different save method)
+    has_base_plot = 'plot(' in cleaned_code and 'ggplot' not in cleaned_code
+
+    # Check if already has save command
+    has_save = 'ggsave' in cleaned_code.lower() or 'pdf(' in cleaned_code.lower() or 'png(' in cleaned_code.lower()
 
     # Add main code chunk
     rmd_content += '\n```{r}\n'
     rmd_content += cleaned_code.rstrip()
 
-    # Add ggsave if has plot but no save command
-    if has_plot and 'ggsave' not in cleaned_code.lower():
+    # Add save command only for ggplot (not base R or scatterplot3d)
+    if has_ggplot and not has_save:
         rmd_filename = title + ".png"
         rmd_content += f'\n\n# Save as PNG\nggsave("{rmd_filename}", width = 8, height = 6, dpi = 300)'
+    elif has_base_plot and not has_save:
+        rmd_filename = title + ".png"
+        rmd_content += f'\n\n# Save as PNG\npng("{rmd_filename}", width = 1600, height = 1200)\ndev.off()'
 
     rmd_content += '\n```\n'
 
