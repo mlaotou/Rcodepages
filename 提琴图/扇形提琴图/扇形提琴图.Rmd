@@ -1,0 +1,189 @@
+---
+title: "Learning"
+author: "Milaotou"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    number_sections: true
+    code_folding: hide
+    css: F:/openclaw/Githubpush/styles.css
+---
+# <span style="display: none;">设置代码块全局选项</span>{.unnumbered}
+```{r setup, include=FALSE}
+ knitr::opts_chunk$set(
+	echo = TRUE,
+	fig.align = "center",
+	fig.height = 8,
+	fig.width = 10,
+	message = FALSE,
+	warning = FALSE,
+	tidy = TRUE
+ )
+```
+
+```{r}
+########################################
+# 步骤1：图形的适用范围与优势（说明）
+########################################
+# 这类“径向（极坐标）小提琴+箱线图”适用于比较多个分组的数值分布，
+# 在圆形布局下同时展示分布形状（小提琴）和集中趋势（箱线），
+# 常用于生物信息学/传染病学等领域比较不同毒株/条件的测定值。
+# 优点包括：高信息密度、节省横向空间、可在外圈直观标注分组名称，
+# 并可添加径向或角度方向的参考线与标签以突出重点。
+
+########################################
+# 加载必要的包
+########################################
+library(tidyverse)
+library(readxl)
+library(ggbeeswarm)  
+library(ggpubr) 
+
+########################################
+# 设置随机种子保证结果可重复
+########################################
+set.seed(123)
+
+########################################
+# 步骤2：生成示例数据（与网页结构一致）
+########################################
+# 定义分组因子水平
+groups_levels <- c(
+  "SARS-CoV-2","SARS-CoV-2 Delta","SARS-CoV-2 Beta",
+  "SARS-CoV-2 Mu","Bat CoV BANAL-52","Pangolin CoV GD-1",
+  "SARS-CoV-2 Omicron BA.1","SARS-CoV-2 Omicron BA.2",
+  "Bat CoV RaTG13","Pangolin CoV GX-P5L","SARS-CoV-1"
+)
+
+# 为每个分组设定不同的规模参数，用于模拟右偏的正值分布（如抗体滴度）
+# 这里用 log-normal 生成，并在不同组上设定不同的均值尺度
+set_scale <- tibble(
+  group = factor(groups_levels, levels = groups_levels),
+  mu    = c(1.6, 1.8, 1.7, 1.5, 1.2, 1.1, 1.9, 2.0, 1.3, 1.25, 1.6),
+  sigma = c(0.35,0.40,0.38,0.33,0.30,0.28,0.45,0.42,0.32,0.31,0.36)
+)
+
+# 每组生成 60 个观测值，并分配到 Sample1–Sample5 五列（每列12个）
+n_per_group <- 60
+n_samples   <- 5
+sample_names <- paste0("Sample", 1:n_samples)
+
+sim_list <- set_scale %>%
+  group_split(group) %>%
+  map(function(df) {
+    g  <- df$group[1]
+    mu <- df$mu[1]
+    sg <- df$sigma[1]
+    vals <- rlnorm(n_per_group, meanlog = mu, sdlog = sg)
+    # 按列切分到 Sample1–Sample5
+    mat <- matrix(vals, ncol = n_samples, byrow = TRUE)
+    tibble(group = g) %>%
+      bind_cols(as_tibble(mat, .name_repair = ~ sample_names))
+  })
+
+data_wide <- bind_rows(sim_list)
+
+# 若需要与您的脚本一致地从 Excel 读入，可将 data_wide 写出再读入：
+# write.xlsx(data_wide, "data.xlsx")  # 需要 openxlsx 或 writexl
+# data <- read_excel("data.xlsx")     # 与网页代码保持一致的读入方式
+
+# 本示例直接把模拟数据赋给 data
+data <- data_wide
+
+########################################
+# 步骤3：整理并复现实图的完整代码（尽量与网页一致）
+########################################
+
+# 将数据从宽格式转换为长格式
+data <- data %>%
+  pivot_longer(
+    cols = starts_with("Sample"),
+    names_to = "Sample",
+    values_to = "Value"
+  )
+
+# 计算每组的最大值与均值（网页中用到了 max 和 mean 标签）
+data <- data %>%
+  group_by(group) %>%
+  mutate(
+    max  = max(Value),
+    mean = mean(Value)
+  ) %>%
+  ungroup()
+
+# 定义分组顺序（因子水平）
+data$group <- factor(
+  data$group,
+  levels = c("SARS-CoV-2","SARS-CoV-2 Delta","SARS-CoV-2 Beta",
+             "SARS-CoV-2 Mu","Bat CoV BANAL-52","Pangolin CoV GD-1",
+             "SARS-CoV-2 Omicron BA.1","SARS-CoV-2 Omicron BA.2",
+             "Bat CoV RaTG13","Pangolin CoV GX-P5L","SARS-CoV-1")
+)
+
+# 定义颜色（填充与边框）
+my_color <- c("#b09ac9","#2ac4f4","#7aced6","#b09ac9","#f9af8b","#f48d8e",
+              "#2c165a","#3364af","#ed1d23","#007c8a","#f16221")
+
+my_color1 <- c("#2c165a","#3364af","#007c8a","#2c165a","#f16221","#eb1c22",
+               "#b09ac9","#2ac4f4","#f58e8f","#7aced6","#f8ab85")
+library(geomtextpath)
+# 绘图
+p <- ggplot(data, aes(x = group, y = log10(Value))) +
+  geom_violin(aes(fill = group, color = group),
+              width = 0.4, scale = "width") +
+  geom_boxplot(width = 0.1, outlier.shape = NA, size = 0.3, staplewidth = 0.5) +
+  # 设置Y轴范围，且不扩展
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 2)) +
+  # 添加垂直线 (x = 11.7处)
+  annotate("segment", x = 11.7, xend = 11.7, y = 0, yend = 2, linewidth = 0.3) +
+  # 设置填充颜色与边框颜色
+  scale_fill_manual(values = my_color) +
+  scale_color_manual(values = my_color1) +
+  # 极坐标变换（用兼容封装的 coord_radial）
+  coord_radial(start = -pi/2,
+               end = pi/2,
+               r.axis.inside = TRUE,
+               inner.radius = 0.1,
+               rotate.angle = TRUE,
+               clip = "off") +
+  # 添加径向标签，并设置文本颜色（外圈显示分组名称）
+  geom_text(
+    data = distinct(data, group),
+    aes(x = group, y = 2, label = group, color = group),
+    angle = 90, hjust = -0.05, size = 3.5, fontface = "bold"
+  ) +
+  # 添加均值标签（显示 log10(max) 的位置上标注组内均值）
+  geom_text(
+    data = distinct(data, group, mean, max),
+    aes(x = group, y = log10(max) + 0.2, label = sprintf("%.1f", mean)),
+    hjust = 0.5, vjust = 0.5, size = 3.5
+  ) +
+  # 设置主题
+  theme_minimal() +
+  theme(
+    axis.title  = element_blank(),                 # 不显示X和Y坐标轴标题
+    axis.line   = element_line(color = "black", linewidth = 0.3),  # 坐标轴线样式
+    axis.ticks  = element_line(color = "black"),   # 刻度线颜色
+    axis.text.x = element_blank(),   # 隐藏原x轴(角度轴)标签
+    axis.text.y = element_text(size = 12, color = "black"),  # y轴(半径轴)标签样式
+    panel.grid  = element_line(linewidth = 0.3),   # 网格线粗细
+    legend.position = "none",                      # 不显示图例
+    plot.margin = margin(10, 10, 10, 10)            # 四周边距：上/右/下/左
+  )
+
+# 显示图形
+print(p)
+png("扇形提琴图.png",width = 8,height = 6,unit = "in",res = 300,family = "serif")
+dev.off()
+
+# Save as PNG
+ggsave("扇形提琴图.png", width = 8, height = 6, dpi = 300)
+```
+
+# Session info
+```{r session-info}
+sessioninfo::session_info()
+```

@@ -1,0 +1,151 @@
+# 分析基因表达，结合了小提琴图和抖动散点图，并添加了趋势拟合线和相关系数统计信息；
+# 基因表达水平与癌症阶段的整体相关性。将所有基因作为一个整体来看了。
+# 生成示例数据
+# set.seed(123)
+# # 创建分组数据
+# groups <- rep(c("Normal", "Early", "Middle", "Late"), each = 25)
+# # 生成癌症相关基因的表达值
+# TP53 <- c(rnorm(25, mean = 2, sd = 0.3),    # Normal
+#           rnorm(25, mean = 3, sd = 0.4),    # Early
+#           rnorm(25, mean = 4.5, sd = 0.5),  # Middle
+#           rnorm(25, mean = 6, sd = 0.6))    # Late
+# BRCA1 <- c(rnorm(25, mean = 5, sd = 0.4),
+#            rnorm(25, mean = 4, sd = 0.5),
+#            rnorm(25, mean = 3, sd = 0.6),
+#            rnorm(25, mean = 2, sd = 0.7))
+# EGFR <- c(rnorm(25, mean = 3, sd = 0.3),
+#           rnorm(25, mean = 4.5, sd = 0.4),
+#           rnorm(25, mean = 6, sd = 0.5),
+#           rnorm(25, mean = 7.5, sd = 0.6))
+# # 创建数据框
+# df <- data.frame(
+#   Type = factor(groups, levels = c("Normal", "Early", "Middle", "Late")),
+#   TP53 = TP53,
+#   BRCA1 = BRCA1,
+#   EGFR = EGFR
+# )
+
+# 绘图函数：plot_expression
+plot_expression <- function(data, gene_name, group_col = "Type", 
+                            x_lab = "Stage", 
+                            y_lab = paste(gene_name, "Expression"),
+                            custom_colors = NULL) {
+  # 加载必要的包
+  library(ggplot2)    # 基础绘图包
+  library(ggprism)    # 提供 theme_prism 主题
+  library(ggsci)      # 提供 scale_fill_npg 颜色方案
+  library(ggpubr)     # 提供 stat_cor 函数
+  # 计算 y 轴的范围，用于放置统计标签
+  y_range <- range(data[[gene_name]])  # 获取基因表达值的最大和最小值
+  y_span <- diff(y_range)              # 计算 y 轴范围的跨度
+  label_y_pos <- y_range[2] + y_span * 0.1  # 设置统计标签的位置为最大值的上方
+  
+  # 创建基础图层
+  p <- ggplot(data, aes(x = .data[[group_col]], y = .data[[gene_name]])) +
+    # 绘制小提琴图层，展示基因表达的分布
+    geom_violin(aes(fill = .data[[group_col]]), 
+                adjust = 1,
+                trim = FALSE, alpha = 0.8) +
+    
+    # 添加抖动散点，避免数据点重叠
+    geom_point(aes(fill = .data[[group_col]]), 
+               shape = 21,  # 圆形填充点
+               size = 1.5,  # 点的大小
+               alpha = 0.7, # 透明度
+               position = position_jitter(width = 0.05),  # 轻微抖动，避免重叠
+               stroke = 0.25)  # 点的边界宽度
+  
+  # 根据是否提供自定义颜色来设置配色方案
+  if (!is.null(custom_colors)) {  # 如果提供了自定义颜色
+    p <- p + scale_fill_manual(values = custom_colors)  # 使用自定义颜色
+  } else {  # 否则
+    p <- p + scale_fill_npg()  # 使用默认的 NPG 颜色方案
+  }
+  
+  # 添加其他图层
+  p <- p +
+    # 添加二次多项式拟合曲线，反映趋势
+    geom_smooth(aes(group = 1), 
+                method = "lm",  # 使用线性模型
+                formula = y ~ poly(x, 2, raw = TRUE),  # 二次多项式公式
+                color = "#ee4f4f",  # 拟合线的颜色
+                fill = "#F3D3C1",
+                linetype = "dashed",  # 拟合线的类型为虚线
+                se = TRUE,  # 显示标准误差范围
+                linewidth = 1,  # 拟合线的宽度
+                alpha = 0.20) +  # 拟合线的透明度
+    
+    # 添加相关系数和 P 值
+    stat_cor(aes(label = paste(..r.label.., ..p.label.., sep = "~`,`~"), 
+                 group = 1),
+             method = "spearman",  # 使用 Spearman 相关系数
+             label.y = label_y_pos,  # 标签的 y 轴位置
+             label.x = 0.8,  # 标签的 x 轴位置
+             size = 4,  # 标签字体大小
+             fontface = "bold") +  # 标签字体加粗
+    
+    # 设置坐标轴标签
+    labs(x = x_lab, y = y_lab) +
+    
+    # 设置主题样式
+    theme_prism(base_line_size = 0.5) +  # 使用 prism 主题
+    theme(
+      plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "cm"),  # 设置图的边距
+      axis.line = element_line(color = "black", linewidth = 0.4),  # 坐标轴线的颜色和宽度
+      axis.text = element_text(color = "black", size = 10),  # 坐标轴文本的颜色和大小
+      axis.title = element_text(size = 12, face = "bold"),  # 坐标轴标题的大小和加粗
+      panel.grid.minor = element_blank(),  # 移除次要网格线
+      panel.grid.major = element_line(linewidth = 0.2, color = "#e5e5e5"),  # 主要网格线的样式
+      legend.position = "none",  # 隐藏图例
+      panel.background = element_rect(fill = "white", color = NA),  # 图背景为白色
+      panel.border = element_blank()  # 移除面板边框
+    ) +
+    
+    # 设置坐标轴样式
+    scale_x_discrete(guide = "prism_bracket") +  # x 轴采用特殊刻度样式
+    scale_y_continuous(guide = "prism_offset_minor",  # y 轴采用特殊刻度样式
+                       expand = expansion(mult = c(0.05, 0.2)))  # 调整 y 轴的扩展范围
+  
+  return(p)  # 返回绘制的图形对象
+}
+
+# 使用 plot_expression 函数绘制 TP53 基因表达图
+# 调用函数，传入以下参数：
+# data：数据框 df
+# gene_name：基因名称 "TP53"
+# group_col：分组列 "Type"
+# x_lab：x 轴标签 "Cancer Progression"
+# y_lab：y 轴标签 "TP53 Gene Expression"
+# custom_colors：自定义颜色方案，使用特定的颜色代码
+
+
+# 设置工作路径
+library(rstudioapi);setwd(dirname(getActiveDocumentContext()$'path'));getwd()
+df <- read.csv("df.csv")
+df$Type <- factor(df$Type,levels = c("Normal","Early","Middle","Late"))
+p1 <- plot_expression(data = df, gene_name = "TP53", group_col = "Type", 
+                     x_lab = "Cancer Progression", 
+                     y_lab = "TP53 Gene Expression",
+                     custom_colors = c("#9AACC7", "#F0C77D", "#E19E9A", "#B9D3D9"))
+
+p2 <- plot_expression(data = df, gene_name = "BRCA1", group_col = "Type", 
+                     x_lab = "Cancer Progression", 
+                     y_lab = "BRCA1 Gene Expression",
+                     custom_colors = c("#9AACC7", "#F0C77D", "#E19E9A", "#B9D3D9")) 
+p3 <- plot_expression(data = df, gene_name = "EGFR", group_col = "Type", 
+                      x_lab = "Cancer Progression", 
+                      y_lab = "EGFR Gene Expression",
+                      custom_colors = c("#9AACC7", "#F0C77D", "#E19E9A", "#B9D3D9")) 
+#导图
+# 统一导出png格式图片
+# 1 构建plot_list
+plot_list <- dplyr::lst(p1,p2,p3)
+# 2 美化文字为TMS，也可以添加其他主题参数
+plot_list <- lapply(plot_list, function(p) {
+  p + theme(text = element_text(family = "serif"))
+})
+# 3 在当前目录生成图片路径及名称
+paths <- paste0("./", names(plot_list), ".png")   # 当前目录
+# 4 利用purrr包的pwalk函数批量导出
+purrr::pwalk(list(paths, plot_list), ggsave, width = 5, height = 4,dpi = 600)
+

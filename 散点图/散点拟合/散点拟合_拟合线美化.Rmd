@@ -1,0 +1,132 @@
+---
+title: "Learning"
+author: "Milaotou"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    number_sections: true
+    code_folding: hide
+    css: F:/openclaw/Githubpush/styles.css
+---
+# <span style="display: none;">设置代码块全局选项</span>{.unnumbered}
+```{r setup, include=FALSE}
+ knitr::opts_chunk$set(
+	echo = TRUE,
+	fig.align = "center",
+	fig.height = 8,
+	fig.width = 10,
+	message = FALSE,
+	warning = FALSE,
+	tidy = TRUE
+ )
+```
+
+```{r}
+library(tidyverse)
+
+# ==========================================
+# 1. 模拟数据生成
+# ==========================================
+set.seed(123)
+n <- 60
+data <- bind_rows(
+  tibble(Group = "Group A", x = runif(n, 20, 140)) %>% mutate(y = 0.8 * x + 10 + rnorm(n, 0, 8)),
+  tibble(Group = "Group B", x = runif(n, 20, 140)) %>% mutate(y = 0.15 * x + 60 + rnorm(n, 0, 7)),
+  tibble(Group = "Group C", x = runif(n, 20, 140)) %>% mutate(y = -0.4 * x + 120 + rnorm(n, 0, 12))
+)
+
+# 计算各组中心点（保留你的代码）
+centroids <- data %>%
+  group_by(Group) %>%
+  summarize(x = mean(x), y = mean(y))
+
+# ==========================================
+# 2. 计算拟合参数并生成图例标签
+# ==========================================
+# 针对每个组别计算 R2, RMSE 和 N
+stats_data <- data %>%
+  group_by(Group) %>%
+  summarize(
+    model = list(lm(y ~ x)),
+    N = n(),
+    .groups = "drop"
+  ) %>%
+  rowwise() %>%
+  mutate(
+    r2 = summary(model)$r.squared,
+    rmse = sqrt(mean(summary(model)$residuals^2)),
+    # 按照目标格式拼接字符串，例如：Group A (R²=0.86, RMSE=10.6, N=60)
+    legend_label = sprintf("%s  (R²=%.2f, RMSE=%.1f, N=%d)", Group, r2, rmse, N)
+  ) %>%
+  ungroup()
+
+# 将标签转换为命名向量，方便映射到颜色上
+legend_labels_map <- setNames(stats_data$legend_label, stats_data$Group)
+
+# ==========================================
+# 3. 绘图
+# ==========================================
+ggplot(data, aes(x = x, y = y, color = Group, fill = Group)) +
+  
+  # 置信区间（只显示填充区域）
+  stat_smooth(method = "lm", se = FALSE, alpha = 0.2, color = NA, fill = "grey70") +
+  
+  # 白色边缘效果（先绘制粗的白线）
+  stat_smooth(method = "lm", se = TRUE, size = 3, color = "white") +
+  
+  # 主要回归线（后绘制细的彩色线）
+  stat_smooth(method = "lm", se = FALSE, size = 2.4) +
+  
+  # 绘制散点
+  geom_point(alpha = 0.8, size = 2) +
+  
+  # 颜色设置 (使用我们计算好的动态标签 legend_labels_map)
+  scale_color_manual(
+    values = c("Group A" = "#1e4d4d", "Group B" = "#ff7f7f", "Group C" = "#3d3d5c"),
+    labels = legend_labels_map
+  ) +
+  scale_fill_manual(
+    values = c("Group A" = "#1e4d4d", "Group B" = "#ff7f7f", "Group C" = "#3d3d5c"),
+    labels = legend_labels_map
+  ) +
+  
+  # 坐标轴与范围
+  coord_cartesian(xlim = c(0, 150), ylim = c(0, 150)) +
+  scale_x_continuous(breaks = seq(0, 150, 30)) +
+  scale_y_continuous(breaks = seq(0, 150, 30)) +
+  
+  # 标签与主题
+  labs(title = "Policy Analysis Regression Chart",
+       x = "Input Factor X",
+       y = "Effect Score Y") +
+  theme_bw() +
+  theme(
+    plot.title = element_text(size = 22, face = "bold", hjust = 0.5, family = "sans"),
+    axis.title = element_text(size = 14, face = "bold", color = "#444444"),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill = "#fdfdfd", color = NA),
+    legend.position = c(0.7, 0.2),
+    # 调整图例背景和边距
+    legend.background = element_rect(fill = "white", color = "#cccccc", size = 0.5),
+    legend.title = element_blank(),
+    legend.text = element_text(face = "bold", color = "#333333"),
+    legend.margin = margin(t = 5, r = 10, b = 5, l = 5),
+    plot.margin = margin(10, 10, 10, 10)
+  ) +
+  # 优化图例图标形状：取消散点和阴影，仅显示为粗横线
+  guides(
+    color = guide_legend(override.aes = list(size = 6, shape = NA, fill = NA)),
+    fill = "none" # 隐藏多余的填充图例
+  )
+
+# Save as PNG
+ggsave("散点拟合_拟合线美化.png", width = 8, height = 6, dpi = 300)
+```
+
+# Session info
+```{r session-info}
+sessioninfo::session_info()
+```

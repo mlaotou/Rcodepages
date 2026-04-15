@@ -9,7 +9,7 @@ output:
     toc_float: true
     number_sections: true
     code_folding: hide
-    css: styles.css
+    css: F:/openclaw/Githubpush/styles.css
 ---
 # <span style="display: none;">设置代码块全局选项</span>{.unnumbered}
 ```{r setup, include=FALSE}
@@ -23,7 +23,6 @@ output:
 	tidy = TRUE
  )
 ```
-
 
 ```{r}
 # 使用gemini 2.5 pro生成代码，首先上传图片，让其识别图片主要信息，再给出提示1：1复现该图
