@@ -1,0 +1,62 @@
+# https://www.nature.com/articles/s41558-024-02087-y#data-availability 文献网址fig3
+
+rm(list = ls())  # 清除环境变量中的对象
+
+# 加载必要的R包
+library(tidyverse)
+library(readxl)
+library(scales)
+library(viridis)
+library(gglmannotate) # 添加线性注释参数
+library(rstudioapi);setwd(dirname(getActiveDocumentContext()$'path'));getwd()
+# 加载数据
+df <- read_xlsx(path = "Soil_C_fractions.xlsx", col_names = TRUE)
+
+# 选择需要的列：ID, POC, MAOC, Aridity
+df_sub <- df %>% dplyr::select(ID, POC, MAOC, Aridity)
+head(df_sub)
+# 确定 x 和 y 的最大范围
+max_range <- max(df_sub$POC, df_sub$MAOC, na.rm = TRUE) + 100
+min_range <- min(df_sub$POC, df_sub$MAOC, na.rm = TRUE)
+# 使用ggplot2绘制散点图和线性拟合曲线
+p1 <- df_sub %>%
+  ggplot(aes(x = POC, y = MAOC)) + 
+  geom_point(aes(color = Aridity), size = 3.5) +  # 根据Aridity着色的散点图
+  geom_smooth(method = "lm", color = "#d7301f", fill = "#fc8d59", linewidth = 2) +  # 线性拟合曲线
+  geom_abline(slope = 1, intercept = 0, linewidth = 1, linetype = 2, color = "#969696") +  # 添加y=x的参考线
+  scale_y_continuous(trans = log_trans(),  # y轴对数变换
+                     labels = function(x) number(x, accuracy = 0.01),  # y轴标签格式化
+                     expand = c(0, 0),  # 去除y轴扩展
+                     limits = c(min_range, max_range)) +  # 设置y轴范围
+  scale_x_continuous(trans = log_trans(),  # x轴对数变换
+                     # labels = function(x) {round(x, 1)},  # x轴标签格式化
+                     labels = function(x) number(x, accuracy = 0.01),  # x轴标签格式化,round对于整数不显示.0，number函数更适合
+                     expand = c(0, 0),  # 去除x轴扩展
+                     limits = c(min_range, max_range)) +  # 设置x轴范围
+  annotation_logticks(sides = "bl", outside = FALSE,  # 添加对数刻度线
+                      short = unit(0.2, "cm"),
+                      mid = unit(0.4, "cm"),
+                      long = unit(0.6, "cm")) +
+  geom_rug(aes(color = Aridity), length = unit(0.03, "npc")) +  # 添加边缘线
+  geom_lmannotate(colour = "#3635F6") + # 添加拟合参数注释
+  # scale_color_viridis(option = "plasma") +  # 设置颜色映射
+  scale_color_gradient(low = "#CE78B3FF",high = "#573B88FF")+
+  labs(x = expression(atop("POC content"~paste("(",~"gC",~"kg"^"-1"~"soil",~")"))),  # 自定义x轴标签
+       y = expression(atop("MAOC content"~paste("(",~"gC",~"kg"^"-1"~"soil",~")")))) +  # 自定义y轴标签
+  theme_bw() +  # 使用白色背景主题
+  theme(axis.text.x = element_text(size = 12, color = "#000000"),  # 自定义轴文本样式
+        axis.text.y = element_text(size = 12, color = "#000000"),
+        axis.title = element_text(size = 15, color = "#000000"),
+        plot.title = element_text(size = 20, color = "#000000", hjust = 0.5),
+        panel.grid = element_blank(),  # 移除网格线
+        plot.margin = margin(t = 1, r = 1, b = 1, l = 1, unit = "cm"),  # 设置绘图边距
+        aspect.ratio = 1,  # 设置绘图宽高比
+        legend.position = c(0.2, 0.75),  # 设置图例位置
+        panel.border = element_rect(linewidth = 1))  # 添加面板边框
+
+# 保存绘图结果为PDF文件
+# ggsave(filename = "linear fitting curve1.pdf",
+#        family = "serif",
+#        plot = p1,
+#        height = 8,
+#        width = 8)

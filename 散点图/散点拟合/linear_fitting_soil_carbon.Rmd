@@ -1,0 +1,107 @@
+---
+title: "R语言绘图：POC与MAOC关系分析"
+output: html_document
+---
+
+## 1. 引言
+
+本文档旨在分析土壤有机碳（SOC）组分，特别是颗粒有机碳（POC）和矿物相关有机碳（MAOC）之间的关系，并探讨其与干旱指数（Aridity）的相关性。分析基于`Soil_C_fractions.xlsx`数据集，并使用R语言的`ggplot2`包进行可视化。
+
+## 2. 数据描述
+
+本次分析使用的数据来源于`Soil_C_fractions.xlsx`文件。其中，我们关注以下几个关键变量：
+
+*   **POC (g kg⁻¹)**: 颗粒有机碳含量，表示土壤中以颗粒态存在的有机碳。
+*   **MAOC (g kg⁻¹)**: 矿物相关有机碳含量，表示与土壤矿物紧密结合的有机碳。
+*   **Aridity**: 干旱指数，用于衡量区域的干旱程度，在本分析中用作区分不同样本的颜色变量。
+
+## 3. 数据准备
+
+首先，加载所需的R包，并读取`Soil_C_fractions.xlsx`文件。随后，筛选出分析所需的列：`ID`, `POC`, `MAOC`, `Aridity`。
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load_data}
+# 加载必要的R包
+library(tidyverse)
+library(readxl)
+library(scales)
+library(viridis)
+library(gglmannotate)
+
+# 读取数据
+df <- read_xlsx(path = "Soil_C_fractions.xlsx", col_names = TRUE)
+
+# 选择需要的列：ID, POC, MAOC, Aridity
+df_sub <- df %>% dplyr::select(ID, POC, MAOC, Aridity)
+
+# 查看数据前几行
+head(df_sub)
+```
+
+## 4. 绘图代码与过程
+
+使用`ggplot2`绘制POC与MAOC的散点图，并根据Aridity进行着色。同时，添加线性拟合曲线、y=x参考线以及对数刻度。
+
+```{r plotting}
+# 确定 x 和 y 的最大范围
+max_range <- max(df_sub$POC, df_sub$MAOC, na.rm = TRUE) + 100
+min_range <- min(df_sub$POC, df_sub$MAOC, na.rm = TRUE)
+
+# 使用ggplot2绘制散点图和线性拟合曲线
+p1 <- df_sub %>%
+  ggplot(aes(x = POC, y = MAOC)) +
+  geom_point(aes(color = Aridity), size = 3.5) +  # 根据Aridity着色的散点图
+  geom_smooth(method = "lm", color = "#d7301f", fill = "#fc8d59", linewidth = 2) +  # 线性拟合曲线
+  geom_abline(slope = 1, intercept = 0, linewidth = 1, linetype = 2, color = "#969696") +  # 添加y=x的参考线
+  scale_y_continuous(trans = log_trans(),  # y轴对数变换
+                     labels = function(x) number(x, accuracy = 0.01),  # y轴标签格式化
+                     expand = c(0, 0),  # 去除y轴扩展
+                     limits = c(min_range, max_range)) +  # 设置y轴范围
+  scale_x_continuous(trans = log_trans(),  # x轴对数变换
+                     labels = function(x) number(x, accuracy = 0.01),  # x轴标签格式化
+                     expand = c(0, 0),  # 去除x轴扩展
+                     limits = c(min_range, max_range)) +  # 设置x轴范围
+  annotation_logticks(sides = "bl", outside = FALSE,  # 添加对数刻度线
+                      short = unit(0.2, "cm"),
+                      mid = unit(0.4, "cm"),
+                      long = unit(0.6, "cm")) +
+  geom_rug(aes(color = Aridity), length = unit(0.03, "npc")) +  # 添加边缘线
+  geom_lmannotate(colour = "#3635F6") + # 添加拟合参数注释
+  scale_color_gradient(low = "#CE78B3FF",high = "#573B88FF")+ # 设置颜色映射
+  labs(x = expression(atop("POC content"~paste("(",~"gC",~"kg"^"-1",~"soil",~")"))),  # 自定义x轴标签
+       y = expression(atop("MAOC content"~paste("(",~"gC",~"kg"^"-1",~"soil",~")")))) +  # 自定义y轴标签
+  theme_bw() +  # 使用白色背景主题
+  theme(axis.text.x = element_text(size = 12, color = "#000000"),  # 自定义轴文本样式
+        axis.text.y = element_text(size = 12, color = "#000000"),
+        axis.title = element_text(size = 15, color = "#000000"),
+        plot.title = element_text(size = 20, color = "#000000", hjust = 0.5),
+        panel.grid = element_blank(),  # 移除网格线
+        plot.margin = margin(t = 1, r = 1, b = 1, l = 1, unit = "cm"),  # 设置绘图边距
+        aspect.ratio = 1,  # 设置绘图宽高比
+        legend.position = c(0.2, 0.75),  # 设置图例位置
+        panel.border = element_rect(linewidth = 1))  # 添加面板边框
+
+# 显示图形
+print(p1)
+
+# 保存绘图结果为PDF文件 (取消注释以启用)
+# ggsave(filename = "linear fitting curve1.pdf",
+#        family = "serif",
+#        plot = p1,
+#        height = 8,
+#        width = 8)
+```
+
+## 5. 注意要点
+
+*   **数据文件**: 确保`Soil_C_fractions.xlsx`文件位于正确的路径下，以便R能够读取。
+*   **对数坐标轴**: 绘制时对POC和MAOC使用了对数坐标轴，这对于处理数值范围较大的数据非常有用。请注意对数轴的刻度表示。
+*   **Aridity变量**: 图中点的颜色代表了`Aridity`值，可以帮助我们观察干旱程度对POC和MAOC关系的影响。
+*   **线性拟合**: `geom_smooth(method = "lm")`添加了线性回归线，`geom_lmannotate()`则在图上直接标注了拟合的统计信息（如R²值、p值等），方便快速解读。
+*   **y=x参考线**: 添加的虚线代表y=x，用于直观比较POC和MAOC的相对大小。当POC和MAOC值相等时，点会落在该线上。
+*   **图例位置**: 图例被放置在图的左上角（c(0.2, 0.75)），以避免遮挡主要数据点。
+
+---
