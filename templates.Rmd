@@ -23,8 +23,3 @@ output:
 	tidy = TRUE
  )
 ```
-
-# Session info {.unnumbered}
-```{r session-info}
-sessioninfo::session_info()
-```

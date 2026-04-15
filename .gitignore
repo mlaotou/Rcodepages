@@ -7,6 +7,9 @@
 # Output directory
 public/
 
+# Auto-generated texts for search
+texts/
+
 # OS files
 .DS_Store
 Thumbs.db

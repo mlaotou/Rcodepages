@@ -1,1 +1,36 @@
-[]
+[
+  {
+    "id": "分组配对连线_分组配对连线",
+    "title": "分组配对连线",
+    "html": "分组配对连线/分组配对连线.html",
+    "text": "texts/分组配对连线.txt",
+    "folder": "分组配对连线",
+    "thumb": "分组配对连线/分组配对连线.png"
+  },
+  {
+    "id": "分组折线图+蜂群点图+柱状图_顶刊美图社_蜂群柱形",
+    "title": "蜂群柱形",
+    "html": "散点图/分组折线图+蜂群点图+柱状图_顶刊美图社/蜂群柱形.html",
+    "text": "texts/蜂群柱形.txt",
+    "folder": "分组折线图+蜂群点图+柱状图_顶刊美图社/蜂群柱形",
+    "thumb": null,
+    "category": "散点图"
+  },
+  {
+    "id": "散点拟合_linear_fitting_soil_carbon",
+    "title": "linear_fitting_soil_carbon",
+    "html": "散点图/散点拟合/linear_fitting_soil_carbon.html",
+    "text": "texts/linear_fitting_soil_carbon.txt",
+    "folder": "散点拟合/linear_fitting_soil_carbon",
+    "thumb": null,
+    "category": "散点图"
+  },
+  {
+    "id": "时间序列图_时间序列误差线",
+    "title": "时间序列误差线",
+    "html": "时间序列图/时间序列误差线.html",
+    "text": "texts/时间序列误差线.txt",
+    "folder": "时间序列图",
+    "thumb": "时间序列图/时间序列误差线.png"
+  }
+]

@@ -688,13 +688,7 @@
     <div class="viz-category-section">
       <div class="viz-category-title">Filter by Visualization Type</div>
       <div class="viz-category-buttons" id="vizCategoryButtons">
-        <button class="viz-category-btn active" data-category="all" onclick="filterByVizCategory('all')">All</button>
-        <button class="viz-category-btn" data-category="圆圈图" onclick="filterByVizCategory('圆圈图')">○ Circular</button>
-        <button class="viz-category-btn" data-category="连线图" onclick="filterByVizCategory('连线图')">∞ Network</button>
-        <button class="viz-category-btn" data-category="散点图" onclick="filterByVizCategory('散点图')">• Scatter</button>
-        <button class="viz-category-btn" data-category="相关性" onclick="filterByVizCategory('相关性')">↔ Correlation</button>
-        <button class="viz-category-btn" data-category="PCA" onclick="filterByVizCategory('PCA')">◇ PCA</button>
-        <button class="viz-category-btn" data-category="趋势图之生存分析" onclick="filterByVizCategory('趋势图之生存分析')">▷ Survival</button>
+        <!-- Category buttons will be generated dynamically -->
       </div>
     </div>
 
@@ -734,81 +728,44 @@
     }
   }
 
-  // Load categories on page load
+  // Load categories on page load - dynamically generate from chapters.json
   async function loadVizCategories() {
-    try {
-      const response = await fetch('categories.txt');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const text = await response.text();
-      vizCategories = parseVizCategories(text);
-      console.log('Loaded categories:', Object.keys(vizCategories));
-      updateCategoryButtonCounts();
-    } catch (error) {
-      console.error('Failed to load categories:', error);
-      // Disable category buttons on error
-      document.querySelectorAll('.viz-category-btn').forEach(btn => {
-        if (btn.dataset.category !== 'all') {
-          btn.disabled = true;
-          btn.style.opacity = '0.5';
-          btn.style.cursor = 'not-allowed';
-        }
-      });
-    }
-  }
-
-  // Update category button counts
-  function updateCategoryButtonCounts() {
-    Object.keys(vizCategories).forEach(category => {
-      const count = vizCategories[category].length;
-      const btn = document.querySelector(`.viz-category-btn[data-category="${category}"]`);
-      if (btn) {
-        // Add count badge if not already present
-        if (!btn.querySelector('.count-badge')) {
-          const badge = document.createElement('span');
-          badge.className = 'count-badge';
-          badge.textContent = ` (${count})`;
-          badge.style.fontSize = '0.85em';
-          badge.style.opacity = '0.8';
-          btn.appendChild(badge);
-        }
+    // Extract unique categories from chapters data
+    const categories = new Set();
+    chaptersData.forEach(chapter => {
+      if (chapter.category) {
+        categories.add(chapter.category);
       }
     });
+
+    console.log('Loaded categories:', Array.from(categories));
+
+    // Generate category buttons dynamically
+    const container = document.getElementById('vizCategoryButtons');
+    let buttonsHtml = '<button class="viz-category-btn active" data-category="all" onclick="filterByVizCategory(\'all\')">All</button>';
+
+    categories.forEach(category => {
+      const count = chaptersData.filter(ch => ch.category === category).length;
+      const icon = getCategoryIcon(category);
+      buttonsHtml += `<button class="viz-category-btn" data-category="${category}" onclick="filterByVizCategory('${category}')">${icon} ${category} (${count})</button>`;
+    });
+
+    container.innerHTML = buttonsHtml;
   }
 
-  // Parse categories.txt
-  function parseVizCategories(text) {
-    const lines = text.split('\n').filter(line => line.trim());
-    const result = {};
-    let currentCategory = null;
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-
-      if (line.includes('小结｜')) {
-        const match = line.match(/^(.+)小结｜/);
-        if (match) {
-          const categoryName = match[1].trim();
-          if (!result[categoryName]) result[categoryName] = [];
-          currentCategory = categoryName;
-        }
-      } else if (line.includes('让')) {
-        continue;
-      } else if (line.startsWith('FigureYa')) {
-        if (currentCategory && result[currentCategory]) {
-          result[currentCategory].push(line.trim());
-        }
-      } else {
-        const knownCategories = ['圆圈图', '连线图', '散点图', '相关性', 'PCA', '趋势图之生存分析'];
-        if (knownCategories.includes(line.trim())) {
-          currentCategory = line.trim();
-          if (!result[currentCategory]) result[currentCategory] = [];
-        }
-      }
-    }
-
-    return result;
+  // Get icon for category
+  function getCategoryIcon(category) {
+    const icons = {
+      '散点图': '•',
+      '时间序列图': '▷',
+      '分组配对连线': '∞',
+      '圆圈图': '○',
+      '连线图': '∩',
+      '相关性': '↔',
+      'PCA': '◇',
+      '趋势图之生存分析': '⊲'
+    };
+    return icons[category] || '●';
   }
 
   // Filter by visualization category
@@ -830,10 +787,7 @@
     if (category === 'all') {
       renderCards(chaptersData);
     } else {
-      const modules = vizCategories[category] || [];
-      const filteredChapters = chaptersData.filter(chapter =>
-        modules.some(module => chapter.folder === module || chapter.title.includes(module))
-      );
+      const filteredChapters = chaptersData.filter(chapter => chapter.category === category);
       renderCards(filteredChapters);
       if (filteredChapters.length > 0) {
         document.getElementById('searchResults').innerHTML =
