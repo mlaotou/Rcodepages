@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- 背景圆形 -->
+  <circle cx="100" cy="100" r="90" fill="#4A90D9" />
+
+  <!-- 字母 M 主体 -->
+  <path d="
+    M 55 135
+    L 55 75
+    L 85 110
+    L 100 85
+    L 115 110
+    L 145 75
+    L 145 135
+  "
+  fill="none"
+  stroke="#FFFFFF"
+  stroke-width="14"
+  stroke-linecap="round"
+  stroke-linejoin="round" />
+
+  <!-- 左侧垂直线 -->
+  <line x1="55" y1="75" x2="55" y2="135" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" />
+
+  <!-- 右侧垂直线 -->
+  <line x1="145" y1="75" x2="145" y2="135" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" />
+</svg>
