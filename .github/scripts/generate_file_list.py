@@ -17,9 +17,9 @@ def extract_category_number(folder_name):
     m = re.match(r'(\d+)', folder_name)
     return int(m.group(1)) if m else 999999
 
-def get_all_files(base_path, category, subdir):
+def get_all_files(base_path, folder_name):
     """Get all files in a directory recursively"""
-    folder_path = os.path.join(base_path, category, subdir)
+    folder_path = os.path.join(base_path, folder_name)
     files = []
 
     if not os.path.exists(folder_path):
@@ -34,7 +34,7 @@ def get_all_files(base_path, category, subdir):
                 continue
 
             full_path = os.path.join(root, filename)
-            rel_path = os.path.relpath(full_path, base_path)
+            rel_path = os.path.relpath(full_path, base_path).replace('\\', '/')
 
             size = os.path.getsize(full_path)
             files.append({
@@ -48,28 +48,34 @@ def generate_file_list():
     """Generate file_list.json"""
     file_list = {}
 
-    # Find all categories
-    categories = [f for f in os.listdir(PUBLISH_DIR)
+    # Find all folders
+    all_folders = [f for f in os.listdir(PUBLISH_DIR)
                 if os.path.isdir(os.path.join(PUBLISH_DIR, f))
                 and f not in EXCLUDE_DIRS
                 and not f.startswith('.')]
 
-    categories_sorted = sorted(categories, key=extract_category_number)
+    all_folders_sorted = sorted(all_folders, key=extract_category_number)
 
-    for category in categories_sorted:
-        category_path = os.path.join(PUBLISH_DIR, category)
+    for folder in all_folders_sorted:
+        folder_path = os.path.join(PUBLISH_DIR, folder)
 
-        # Find subdirectories
-        subdirs = [f for f in os.listdir(category_path)
-                  if os.path.isdir(os.path.join(category_path, f))
+        # Check if folder has subdirectories
+        subdirs = [f for f in os.listdir(folder_path)
+                  if os.path.isdir(os.path.join(folder_path, f))
                   and not f.startswith('.')]
 
-        for subdir in subdirs:
-            folder_name = f"{category}/{subdir}"
-            files = get_all_files(PUBLISH_DIR, category, subdir)
-
+        if len(subdirs) >= 2:
+            # Has subdirs - it's a category, process each subfolder
+            for subdir in subdirs:
+                folder_name = f"{folder}/{subdir}"
+                files = get_all_files(PUBLISH_DIR, folder_name)
+                if files:
+                    file_list[folder_name] = files
+        else:
+            # No subdirs or only 1 subdir - treat as single folder
+            files = get_all_files(PUBLISH_DIR, folder)
             if files:
-                file_list[folder_name] = files
+                file_list[folder] = files
 
     # Write file_list.json
     output_path = os.path.join(PUBLISH_DIR, "file_list.json")

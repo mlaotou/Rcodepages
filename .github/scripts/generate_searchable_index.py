@@ -71,8 +71,11 @@ def _add_chapter(chapters, category, folder_name, html_path):
         tf.write(text)
     text_file_for_json = text_file.replace('\\', '/')
 
-    # folder路径
-    folder = f"{folder_name}/{title_name}" if category else folder_name
+    # folder路径 - 父文件夹路径
+    if category:
+        folder = f"{category}/{folder_name}"
+    else:
+        folder = folder_name
 
     html_path_for_json = html_path.replace('\\', '/')
     entry = {

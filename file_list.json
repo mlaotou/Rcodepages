@@ -1,78 +1,150 @@
 {
+  "分组配对连线": [
+    {
+      "name": "分组配对连线/data.csv",
+      "size": 1747
+    },
+    {
+      "name": "分组配对连线/分组配对连线.R",
+      "size": 5837
+    },
+    {
+      "name": "分组配对连线/分组配对连线.Rmd",
+      "size": 6390
+    },
+    {
+      "name": "分组配对连线/分组配对连线.html",
+      "size": 1068744
+    },
+    {
+      "name": "分组配对连线/分组配对连线.png",
+      "size": 306217
+    }
+  ],
   "散点图/分组折线图+蜂群点图+柱状图_顶刊美图社": [
     {
-      "name": "散点图\\分组折线图+蜂群点图+柱状图_顶刊美图社\\BarDotErrorBar.pdf",
+      "name": "散点图/分组折线图+蜂群点图+柱状图_顶刊美图社/BarDotErrorBar.pdf",
       "size": 22654
     },
     {
-      "name": "散点图\\分组折线图+蜂群点图+柱状图_顶刊美图社\\BarDotLine.pdf",
+      "name": "散点图/分组折线图+蜂群点图+柱状图_顶刊美图社/BarDotLine.pdf",
       "size": 24202
     },
     {
-      "name": "散点图\\分组折线图+蜂群点图+柱状图_顶刊美图社\\Beeswarm.pdf",
+      "name": "散点图/分组折线图+蜂群点图+柱状图_顶刊美图社/Beeswarm.pdf",
       "size": 31945
     },
     {
-      "name": "散点图\\分组折线图+蜂群点图+柱状图_顶刊美图社\\combined.pdf",
+      "name": "散点图/分组折线图+蜂群点图+柱状图_顶刊美图社/Beeswarm_1.png",
+      "size": 209035
+    },
+    {
+      "name": "散点图/分组折线图+蜂群点图+柱状图_顶刊美图社/combined.pdf",
       "size": 46480
     },
     {
-      "name": "散点图\\分组折线图+蜂群点图+柱状图_顶刊美图社\\data.xlsx",
+      "name": "散点图/分组折线图+蜂群点图+柱状图_顶刊美图社/data.xlsx",
       "size": 30472
     },
     {
-      "name": "散点图\\分组折线图+蜂群点图+柱状图_顶刊美图社\\折线+蜂群+柱形图.R",
+      "name": "散点图/分组折线图+蜂群点图+柱状图_顶刊美图社/折线+蜂群+柱形图.R",
       "size": 12900
     },
     {
-      "name": "散点图\\分组折线图+蜂群点图+柱状图_顶刊美图社\\蜂群柱形.Rmd",
+      "name": "散点图/分组折线图+蜂群点图+柱状图_顶刊美图社/蜂群柱形.Rmd",
       "size": 13415
     },
     {
-      "name": "散点图\\分组折线图+蜂群点图+柱状图_顶刊美图社\\蜂群柱形.html",
+      "name": "散点图/分组折线图+蜂群点图+柱状图_顶刊美图社/蜂群柱形.html",
       "size": 1229339
     }
   ],
   "散点图/散点拟合": [
     {
-      "name": "散点图\\散点拟合\\640.webp",
+      "name": "散点图/散点拟合/640.webp",
       "size": 30682
     },
     {
-      "name": "散点图\\散点拟合\\Soil_C_fractions.xlsx",
+      "name": "散点图/散点拟合/Soil_C_fractions.xlsx",
       "size": 138917
     },
     {
-      "name": "散点图\\散点拟合\\linear fitting curve.pdf",
+      "name": "散点图/散点拟合/linear fitting curve.pdf",
       "size": 37381
     },
     {
-      "name": "散点图\\散点拟合\\linear fitting curve1.pdf",
+      "name": "散点图/散点拟合/linear fitting curve1.pdf",
       "size": 36112
     },
     {
-      "name": "散点图\\散点拟合\\linear fitting curve_1.tif",
+      "name": "散点图/散点拟合/linear fitting curve_1.png",
       "size": 483055
     },
     {
-      "name": "散点图\\散点拟合\\linear_fitting_soil_carbon.Rmd",
+      "name": "散点图/散点拟合/linear_fitting_soil_carbon.Rmd",
       "size": 5346
     },
     {
-      "name": "散点图\\散点拟合\\linear_fitting_soil_carbon.html",
+      "name": "散点图/散点拟合/linear_fitting_soil_carbon.html",
       "size": 704168
     },
     {
-      "name": "散点图\\散点拟合\\二维变量关系图.R",
+      "name": "散点图/散点拟合/二维变量关系图.R",
       "size": 7627
     },
     {
-      "name": "散点图\\散点拟合\\散点拟合_拟合线美化.R",
+      "name": "散点图/散点拟合/散点拟合_拟合线美化.R",
       "size": 3580
     },
     {
-      "name": "散点图\\散点拟合\\线性拟合.R",
+      "name": "散点图/散点拟合/线性拟合.R",
       "size": 3459
+    }
+  ],
+  "时间序列图": [
+    {
+      "name": "时间序列图/Rplot01.png",
+      "size": 14641
+    },
+    {
+      "name": "时间序列图/data.txt",
+      "size": 755
+    },
+    {
+      "name": "时间序列图/data.xlsx",
+      "size": 10501
+    },
+    {
+      "name": "时间序列图/data_1.xlsx",
+      "size": 140901
+    },
+    {
+      "name": "时间序列图/data_replicates3.csv",
+      "size": 9921
+    },
+    {
+      "name": "时间序列图/时间序列误差线.R",
+      "size": 3516
+    },
+    {
+      "name": "时间序列图/时间序列误差线.Rmd",
+      "size": 3888
+    },
+    {
+      "name": "时间序列图/时间序列误差线.html",
+      "size": 1065829
+    },
+    {
+      "name": "时间序列图/时间序列误差线.png",
+      "size": 194260
+    },
+    {
+      "name": "时间序列图/时间序列误差线1.png",
+      "size": 247307
+    },
+    {
+      "name": "时间序列图/时间序列误差线_分面.png",
+      "size": 147375
     }
   ]
 }

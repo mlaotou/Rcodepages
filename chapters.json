@@ -12,7 +12,7 @@
     "title": "蜂群柱形",
     "html": "散点图/分组折线图+蜂群点图+柱状图_顶刊美图社/蜂群柱形.html",
     "text": "texts/蜂群柱形.txt",
-    "folder": "分组折线图+蜂群点图+柱状图_顶刊美图社/蜂群柱形",
+    "folder": "散点图/分组折线图+蜂群点图+柱状图_顶刊美图社",
     "thumb": null,
     "category": "散点图"
   },
@@ -21,7 +21,7 @@
     "title": "linear_fitting_soil_carbon",
     "html": "散点图/散点拟合/linear_fitting_soil_carbon.html",
     "text": "texts/linear_fitting_soil_carbon.txt",
-    "folder": "散点拟合/linear_fitting_soil_carbon",
+    "folder": "散点图/散点拟合",
     "thumb": null,
     "category": "散点图"
   },
