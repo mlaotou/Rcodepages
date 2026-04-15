@@ -10,6 +10,7 @@ import os
 import re
 
 TEMPLATE_PATH = "templates.Rmd"
+EXCLUDE_DIRS = {'.git', '.github', 'texts', '__pycache__', 'public'}
 
 def get_template():
     """Read the template file"""
@@ -100,14 +101,35 @@ sessioninfo::session_info()
     return rmd_filename
 
 def find_r_files():
-    """Find .R files in folders"""
+    """Find all .R files in folders, skip if .Rmd already exists"""
     r_files = []
     for folder in os.listdir('.'):
-        if not os.path.isdir(folder) or folder.startswith('.'):
+        if not os.path.isdir(folder) or folder.startswith('.') or folder in EXCLUDE_DIRS:
             continue
-        r_file = os.path.join(folder, folder + ".R")
-        if os.path.exists(r_file):
-            r_files.append(r_file)
+        folder_path = os.path.join('.', folder)
+        for subfolder in os.listdir(folder_path):
+            subfolder_path = os.path.join(folder_path, subfolder)
+            if not os.path.isdir(subfolder_path) or subfolder.startswith('.'):
+                continue
+            # Find all .R files in subfolder
+            for f in os.listdir(subfolder_path):
+                if f.endswith('.R'):
+                    r_file = os.path.join(subfolder_path, f)
+                    rmd_file = os.path.splitext(r_file)[0] + '.Rmd'
+                    # Skip if .Rmd already exists
+                    if os.path.exists(rmd_file):
+                        print(f"  Skip (RMD exists): {rmd_file}")
+                        continue
+                    r_files.append(r_file)
+        # Also check root folder for .R files (no subfolder)
+        for f in os.listdir(folder_path):
+            if f.endswith('.R') and os.path.isfile(os.path.join(folder_path, f)):
+                r_file = os.path.join(folder_path, f)
+                rmd_file = os.path.splitext(r_file)[0] + '.Rmd'
+                if os.path.exists(rmd_file):
+                    print(f"  Skip (RMD exists): {rmd_file}")
+                    continue
+                r_files.append(r_file)
     return r_files
 
 def main():
