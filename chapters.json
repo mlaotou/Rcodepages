@@ -8,21 +8,39 @@
     "thumb": "分组配对连线/分组配对连线.png"
   },
   {
-    "id": "分组折线图+蜂群点图+柱状图_顶刊美图社_蜂群柱形",
-    "title": "蜂群柱形",
-    "html": "散点图/分组折线图+蜂群点图+柱状图_顶刊美图社/蜂群柱形.html",
-    "text": "texts/蜂群柱形.txt",
-    "folder": "散点图/分组折线图+蜂群点图+柱状图_顶刊美图社",
-    "thumb": null,
+    "id": "密度地毯图_密度地毯图",
+    "title": "密度地毯图",
+    "html": "密度图/密度地毯图/密度地毯图.html",
+    "text": "texts/密度地毯图.txt",
+    "folder": "密度图/密度地毯图",
+    "thumb": "密度图/密度地毯图/密度地毯图.png",
+    "category": "密度图"
+  },
+  {
+    "id": "扇形提琴图_扇形提琴图",
+    "title": "扇形提琴图",
+    "html": "提琴图/扇形提琴图/扇形提琴图.html",
+    "text": "texts/扇形提琴图.txt",
+    "folder": "提琴图/扇形提琴图",
+    "thumb": "提琴图/扇形提琴图/扇形提琴图.png",
+    "category": "提琴图"
+  },
+  {
+    "id": "分组折线图_分组折线图",
+    "title": "分组折线图",
+    "html": "散点图/分组折线图/分组折线图.html",
+    "text": "texts/分组折线图.txt",
+    "folder": "散点图/分组折线图",
+    "thumb": "散点图/分组折线图/分组折线图.png",
     "category": "散点图"
   },
   {
-    "id": "散点拟合_linear_fitting_soil_carbon",
-    "title": "linear_fitting_soil_carbon",
-    "html": "散点图/散点拟合/linear_fitting_soil_carbon.html",
-    "text": "texts/linear_fitting_soil_carbon.txt",
+    "id": "散点拟合_散点拟合",
+    "title": "散点拟合",
+    "html": "散点图/散点拟合/散点拟合.html",
+    "text": "texts/散点拟合.txt",
     "folder": "散点图/散点拟合",
-    "thumb": null,
+    "thumb": "散点图/散点拟合/散点拟合.png",
     "category": "散点图"
   },
   {

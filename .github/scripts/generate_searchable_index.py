@@ -19,7 +19,7 @@ def find_html():
         subfolders = [d for d in os.listdir(top_folder)
                      if os.path.isdir(os.path.join(top_folder, d)) and not d.startswith('.')]
 
-        if len(subfolders) >= 2:
+        if len(subfolders) >= 1:
             categories.add(top_folder)
 
     print(f"Categories (2+ subfolders): {categories}")
@@ -32,7 +32,7 @@ def find_html():
         subfolders = [d for d in os.listdir(top_folder)
                      if os.path.isdir(os.path.join(top_folder, d)) and not d.startswith('.')]
 
-        if len(subfolders) >= 2:
+        if len(subfolders) >= 1:
             for subfolder in subfolders:
                 full_path = os.path.join(top_folder, subfolder)
                 for f in os.listdir(full_path):
